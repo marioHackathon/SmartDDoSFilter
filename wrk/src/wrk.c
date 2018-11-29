@@ -233,6 +233,13 @@ void *thread_main(void *arg) {
     return NULL;
 }
 
+int  getRandoms(int lower, int upper
+                             )
+{
+    int num = (rand() % (upper - lower + 1)) + lower;
+    return num;
+}
+
 static int connect_socket(thread *thread, connection *c) {
     struct addrinfo *addr = thread->addr;
     struct aeEventLoop *loop = thread->loop;
@@ -242,9 +249,19 @@ static int connect_socket(thread *thread, connection *c) {
 
     flags = fcntl(fd, F_GETFL, 0);
     fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+//    // Bind to a specific network interface (and optionally a specific local port)
+    char my_ip[50]="";
+    int ip_tail = getRandoms(2,10);
+    sprintf(my_ip,"172.16.1.%d",ip_tail);
+    struct sockaddr_in localaddr;
+    localaddr.sin_family = AF_INET;
+    localaddr.sin_addr.s_addr = inet_addr(my_ip);
+    localaddr.sin_port = 0;  // Any local port will do
+    bind(fd, (struct sockaddr *)&localaddr, sizeof(localaddr));
 
     if (connect(fd, addr->ai_addr, addr->ai_addrlen) == -1) {
         if (errno != EINPROGRESS) goto error;
+        exit(1);
     }
 
     flags = 1;
