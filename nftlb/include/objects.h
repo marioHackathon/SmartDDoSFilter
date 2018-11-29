@@ -46,11 +46,17 @@
 #define DEFAULT_ACTION		ACTION_START
 #define DEFAULT_NEW_RATE_LIMIT_SADDR		0
 #define DEFAULT_NEW_RATE_LIMIT_BURST_SADDR	0
+#define DEFAULT_POLICY_TYPE	VALUE_TYPE_BLACK
+#define DEFAULT_POLICY_TIMEOUT	0
+#define DEFAULT_POLICY_PRIORITY	-1
+#define DEFAULT_TIME		NULL
 
 enum levels {
 	LEVEL_INIT,
 	LEVEL_FARMS,
 	LEVEL_BCKS,
+	LEVEL_POLICIES,
+	LEVEL_ELEMENTS
 };
 
 enum keys {
@@ -80,23 +86,35 @@ enum keys {
 	KEY_ACTION,
 	KEY_NEW_RATE_LIMIT_SADDR,
 	KEY_NEW_RATE_LIMIT_BURST_SADDR,
+	KEY_TYPE,
+	KEY_TIMEOUT,
+	KEY_DATA,
+	KEY_TIME
 };
 
-enum obj_types {
-	OBJ_TYPE_FARM,
-	OBJ_TYPE_BCK,
+enum actions {
+	ACTION_START,
+	ACTION_STOP,
+	ACTION_RELOAD,
+	ACTION_DELETE,
+	ACTION_NONE,
 };
 
 struct obj_config {
-	struct farm		*fptr;
+	struct farm			*fptr;
 	struct backend		*bptr;
+	struct policy		*pptr;
+	struct element		*eptr;
 	struct config_pair	*c;
 };
 
 void objects_init(void);
 struct list_head * obj_get_farms(void);
+struct list_head * obj_get_policies(void);
 int obj_get_total_farms(void);
+int obj_get_total_policies(void);
 void obj_set_total_farms(int new_value);
+void obj_set_total_policies(int new_value);
 int obj_get_dsr_counter(void);
 void obj_set_dsr_counter(int new_value);
 
@@ -113,5 +131,7 @@ int obj_set_attribute(struct config_pair *c, int actionable);
 int obj_set_attribute_string(char *src, char **dst);
 void obj_print(void);
 int obj_rulerize(void);
+
+char * obj_print_policy_type(int type);
 
 #endif /* _OBJECTS_H_ */

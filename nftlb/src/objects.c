@@ -24,6 +24,8 @@
 #include "list.h"
 #include "farms.h"
 #include "backends.h"
+#include "policies.h"
+#include "elements.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,15 +38,23 @@ struct list_head	farms;
 int			total_farms = 0;
 int			dsr_counter = 0;
 
+struct list_head	policies;
+int			total_policies = 0;
 
 void objects_init(void)
 {
 	init_list_head(&farms);
+	init_list_head(&policies);
 }
 
 struct list_head * obj_get_farms(void)
 {
 	return &farms;
+}
+
+struct list_head * obj_get_policies(void)
+{
+	return &policies;
 }
 
 int obj_get_total_farms(void)
@@ -56,6 +66,17 @@ void obj_set_total_farms(int new_value)
 {
 	if (new_value >= 0)
 		total_farms = new_value;
+}
+
+int obj_get_total_policies(void)
+{
+	return total_policies;
+}
+
+void obj_set_total_policies(int new_value)
+{
+	if (new_value >= 0)
+		total_policies = new_value;
 }
 
 int obj_get_dsr_counter(void)
@@ -77,6 +98,8 @@ static void obj_config_init(void)
 	config_pair_init(current_obj.c);
 	current_obj.fptr = NULL;
 	current_obj.bptr = NULL;
+	current_obj.pptr = NULL;
+	current_obj.eptr = NULL;
 }
 
 struct obj_config * obj_get_current_object(void)
@@ -262,3 +285,16 @@ int obj_rulerize(void)
 	obj_config_init();
 	return farm_s_rulerize();
 }
+
+char * obj_print_policy_type(int type)
+{
+	switch (type) {
+	case VALUE_TYPE_BLACK:
+		return CONFIG_VALUE_TYPE_BLACK;
+	case VALUE_TYPE_WHITE:
+		return CONFIG_VALUE_TYPE_WHITE;
+	default:
+		return NULL;
+	}
+}
+

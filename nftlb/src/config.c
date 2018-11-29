@@ -30,6 +30,8 @@
 #include "config.h"
 #include "farms.h"
 #include "backends.h"
+#include "policies.h"
+#include "elements.h"
 
 #define CONFIG_MAXBUF			4096
 
@@ -422,6 +424,8 @@ static void add_dump_list(json_t *obj, const char *objname, int object,
 {
 	struct farm *f;
 	struct backend *b;
+	struct policy *p;
+	struct element *e;
 	json_t *jarray = json_array();
 	json_t *item;
 	char value[10];
@@ -470,6 +474,30 @@ static void add_dump_list(json_t *obj, const char *objname, int object,
 			json_array_append_new(jarray, item);
 		}
 		break;
+	case LEVEL_POLICIES:
+		list_for_each_entry(p, head, list) {
+			if (name != NULL && (strcmp(name, "") != 0) && (strcmp(p->name, name) != 0))
+				continue;
+
+			item = json_object();
+			add_dump_obj(item, "name", p->name);
+			add_dump_obj(item, "type", obj_print_policy_type(p->type));
+			config_dump_int(value, p->timeout);
+			add_dump_obj(item, "timeout", value);
+			config_dump_int(value, p->priority);
+			add_dump_obj(item, "priority", value);
+			add_dump_list(item, CONFIG_KEY_ELEMENTS, LEVEL_ELEMENTS, &p->elements, NULL);
+			json_array_append_new(jarray, item);
+		}
+		break;
+	case LEVEL_ELEMENTS:
+		list_for_each_entry(e, head, list) {
+			item = json_object();
+			add_dump_obj(item, "data", e->data);
+			add_dump_obj(item, "time", e->time);
+			json_array_append_new(jarray, item);
+		}
+		break;
 	default:
 		return;
 	}
@@ -484,6 +512,22 @@ int config_print_farms(char **buf, char *name)
 	json_t* jdata = json_object();
 
 	add_dump_list(jdata, CONFIG_KEY_FARMS, LEVEL_FARMS, farms, name);
+
+	*buf = json_dumps(jdata, JSON_INDENT(8));
+	json_decref(jdata);
+
+	if (*buf == NULL)
+		return -1;
+
+	return 0;
+}
+
+int config_print_policies(char **buf, char *name)
+{
+	struct list_head *policies = obj_get_policies();
+	json_t* jdata = json_object();
+
+	add_dump_list(jdata, CONFIG_KEY_POLICIES, LEVEL_POLICIES, policies, name);
 
 	*buf = json_dumps(jdata, JSON_INDENT(8));
 	json_decref(jdata);

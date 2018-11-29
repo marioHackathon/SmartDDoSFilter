@@ -145,19 +145,21 @@ static int get_request(char *buf, struct nftlb_http_state *state)
 
 static int send_get_response(struct nftlb_http_state *state)
 {
-	char farm[SRV_MAX_IDENT] = {0};
-	char farms[SRV_MAX_IDENT] = {0};
+	char secondlevel[SRV_MAX_IDENT] = {0};
+	char firstlevel[SRV_MAX_IDENT] = {0};
 
-	sscanf(state->uri, "/%199[^/]/%199[^/\n]", farms, farm);
+	sscanf(state->uri, "/%199[^/]/%199[^/\n]", firstlevel, secondlevel);
 
-	if (strcmp(farms, CONFIG_KEY_FARMS) != 0) {
-		state->status_code = WS_HTTP_500;
-		return -1;
-	}
-
-	if (config_print_farms(&state->body_response, farm) == 0) {
-		state->status_code = WS_HTTP_200;
-		return 0;
+	if (strcmp(firstlevel, CONFIG_KEY_FARMS) == 0) {
+		if (config_print_farms(&state->body_response, secondlevel) == 0) {
+			state->status_code = WS_HTTP_200;
+			return 0;
+		}
+	} else if (strcmp(firstlevel, CONFIG_KEY_POLICIES) == 0) {
+		if (config_print_policies(&state->body_response, secondlevel) == 0) {
+			state->status_code = WS_HTTP_200;
+			return 0;
+		}
 	}
 
 	state->status_code = WS_HTTP_500;
@@ -166,67 +168,67 @@ static int send_get_response(struct nftlb_http_state *state)
 
 static int send_delete_response(struct nftlb_http_state *state)
 {
-	char farm[SRV_MAX_IDENT] = {0};
-	char bck[SRV_MAX_IDENT] = {0};
-	char farms[SRV_MAX_IDENT] = {0};
-	char bcks[SRV_MAX_IDENT] = {0};
+	char firstlevel[SRV_MAX_IDENT] = {0};
+	char secondlevel[SRV_MAX_IDENT] = {0};
+	char thirdlevel[SRV_MAX_IDENT] = {0};
+	char fourthlevel[SRV_MAX_IDENT] = {0};
 	int ret;
 
 	sscanf(state->uri, "/%199[^/]/%199[^/]/%199[^/]/%199[^\n]",
-	       farms, farm, bcks, bck);
+	       firstlevel, secondlevel, thirdlevel, fourthlevel);
 
-	if (strcmp(farms, CONFIG_KEY_FARMS) != 0) {
-		state->status_code = WS_HTTP_500;
-		return -1;
+	if (strcmp(firstlevel, CONFIG_KEY_FARMS) == 0) {
+		state->body_response = malloc(SRV_MAX_BUF);
+		if (!state->body_response) {
+			state->status_code = WS_HTTP_500;
+			return -1;
+		}
+
+		if (strcmp(thirdlevel,CONFIG_KEY_BCKS) == 0) {
+			ret = config_set_backend_action(secondlevel, fourthlevel, CONFIG_VALUE_ACTION_DELETE);
+			if (ret != 0) {
+				config_print_response(&state->body_response,
+							  "error deleting backend");
+				goto delete_end;
+			}
+			ret = config_set_farm_action(secondlevel, CONFIG_VALUE_ACTION_RELOAD);
+			if (ret != 0) {
+				config_print_response(&state->body_response,
+							  "error reloading farm");
+				goto delete_end;
+			}
+			ret = obj_rulerize();
+			if (ret != 0) {
+				config_print_response(&state->body_response,
+							  "error generating rules");
+				goto delete_end;
+			}
+		} else {
+			ret = config_set_farm_action(secondlevel, CONFIG_VALUE_ACTION_STOP);
+			if (ret != 0) {
+				config_print_response(&state->body_response,
+							  "error stopping farm");
+				goto delete_end;
+			}
+			ret = obj_rulerize();
+			if (ret != 0) {
+				config_print_response(&state->body_response,
+							  "error generating rules");
+				goto delete_end;
+			}
+			config_set_farm_action(secondlevel, CONFIG_VALUE_ACTION_DELETE);
+			if (ret != 0) {
+				config_print_response(&state->body_response,
+							  "error deleting farm");
+				goto delete_end;
+			}
+		}
+
+		config_print_response(&state->body_response, "success");
 	}
 
-	state->body_response = malloc(SRV_MAX_BUF);
-	if (!state->body_response) {
-		state->status_code = WS_HTTP_500;
-		return -1;
-	}
-
-	if (strcmp(bcks,CONFIG_KEY_BCKS) == 0) {
-		ret = config_set_backend_action(farm, bck, CONFIG_VALUE_ACTION_DELETE);
-		if (ret != 0) {
-			config_print_response(&state->body_response,
-					      "error deleting backend");
-			goto delete_end;
-		}
-		ret = config_set_farm_action(farm, CONFIG_VALUE_ACTION_RELOAD);
-		if (ret != 0) {
-			config_print_response(&state->body_response,
-					      "error reloading farm");
-			goto delete_end;
-		}
-		ret = obj_rulerize();
-		if (ret != 0) {
-			config_print_response(&state->body_response,
-					      "error generating rules");
-			goto delete_end;
-		}
-	} else {
-		ret = config_set_farm_action(farm, CONFIG_VALUE_ACTION_STOP);
-		if (ret != 0) {
-			config_print_response(&state->body_response,
-					      "error stopping farm");
-			goto delete_end;
-		}
-		ret = obj_rulerize();
-		if (ret != 0) {
-			config_print_response(&state->body_response,
-					      "error generating rules");
-			goto delete_end;
-		}
-		config_set_farm_action(farm, CONFIG_VALUE_ACTION_DELETE);
-		if (ret != 0) {
-			config_print_response(&state->body_response,
-					      "error deleting farm");
-			goto delete_end;
-		}
-	}
-
-	config_print_response(&state->body_response, "success");
+	state->status_code = WS_HTTP_500;
+	return -1;
 
 delete_end:
 	state->status_code = WS_HTTP_200;
@@ -235,7 +237,12 @@ delete_end:
 
 static int send_post_response(struct nftlb_http_state *state)
 {
-	if (strncmp(state->uri, "/farms", 6) != 0) {
+	char firstlevel[SRV_MAX_IDENT] = {0};
+
+	sscanf(state->uri, "/%199[^\n]", firstlevel);
+
+	if ((strcmp(firstlevel, CONFIG_KEY_FARMS) != 0) &&
+		(strcmp(firstlevel, CONFIG_KEY_POLICIES) != 0)) {
 		state->status_code = WS_HTTP_500;
 		return -1;
 	}
@@ -248,13 +255,13 @@ static int send_post_response(struct nftlb_http_state *state)
 
 	if (config_buffer(state->body) != 0) {
 		config_print_response(&state->body_response,
-				      "error parsing buffer");
+					  "error parsing buffer");
 		goto post_end;
 	}
 
 	if (obj_rulerize() != 0) {
 		config_print_response(&state->body_response,
-				      "error generating rules");
+					  "error generating rules");
 		goto post_end;
 	}
 

@@ -73,14 +73,6 @@ enum states {
 	VALUE_STATE_CONFERR,
 };
 
-enum actions {
-	ACTION_START,
-	ACTION_STOP,
-	ACTION_RELOAD,
-	ACTION_DELETE,
-	ACTION_NONE,
-};
-
 #define VALUE_LOG_NONE			0
 #define VALUE_LOG_INPUT			(1 << 0)
 #define VALUE_LOG_FORWARD		(1 << 1)

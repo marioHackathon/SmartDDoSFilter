@@ -50,6 +50,12 @@
 #define CONFIG_KEY_ACTION		"action"
 #define CONFIG_KEY_NEW_RATE_LIMIT_SADDR		"new-rate-limit-saddr"
 #define CONFIG_KEY_NEW_RATE_LIMIT_BURST_SADDR		"new-rate-limit-burst-saddr"
+#define CONFIG_KEY_POLICIES		"policies"
+#define CONFIG_KEY_TYPE			"type"
+#define CONFIG_KEY_TIMEOUT		"timeout"
+#define CONFIG_KEY_ELEMENTS		"elements"
+#define CONFIG_KEY_DATA			"data"
+#define CONFIG_KEY_TIME			"time"
 
 #define CONFIG_VALUE_FAMILY_IPV4	"ipv4"
 #define CONFIG_VALUE_FAMILY_IPV6	"ipv6"
@@ -90,6 +96,9 @@
 #define CONFIG_VALUE_ACTION_START	"start"
 #define CONFIG_VALUE_ACTION_RELOAD	"reload"
 #define CONFIG_VALUE_ACTION_NONE	"none"
+#define CONFIG_VALUE_TYPE_BLACK		"blacklist"
+#define CONFIG_VALUE_TYPE_WHITE		"whitelist"
+
 
 enum config_src {
 	CONFIG_SRC_FILE,
@@ -110,5 +119,7 @@ int config_print_farms(char **buf, char *name);
 int config_set_farm_action(const char *name, const char *value);
 int config_set_backend_action(const char *fname, const char *bname, const char *value);
 void config_print_response(char **buf, const char *message);
+
+int config_print_policies(char **buf, char *name);
 
 #endif /* _CONFIG_H_ */
