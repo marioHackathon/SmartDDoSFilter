@@ -67,6 +67,8 @@ static struct farm * farm_create(char *name)
 	pfarm->mark = DEFAULT_MARK;
 	pfarm->state = DEFAULT_FARM_STATE;
 	pfarm->action = DEFAULT_ACTION;
+	pfarm->new_rate_limit_saddr = DEFAULT_NEW_RATE_LIMIT_SADDR;
+	pfarm->new_rate_limit_burst_saddr = DEFAULT_NEW_RATE_LIMIT_BURST_SADDR;
 
 	init_list_head(&pfarm->backends);
 
@@ -291,6 +293,9 @@ static void farm_print(struct farm *f)
 
 	if (f->srcaddr)
 		syslog(LOG_DEBUG,"    [srcaddr] %s", f->srcaddr);
+
+	syslog(LOG_DEBUG,"    [new_rate_limit_saddr] %d", f->new_rate_limit_saddr);
+	syslog(LOG_DEBUG,"    [new_rate_limit_burst_saddr] %d", f->new_rate_limit_burst_saddr);
 
 	syslog(LOG_DEBUG,"    [family] %s", obj_print_family(f->family));
 	syslog(LOG_DEBUG,"    [mode] %s", obj_print_mode(f->mode));
@@ -562,6 +567,12 @@ int farm_set_attribute(struct config_pair *c)
 		break;
 	case KEY_ACTION:
 		farm_set_action(f, c->int_value);
+		break;
+	case KEY_NEW_RATE_LIMIT_SADDR:
+		f->new_rate_limit_saddr = c->int_value;
+		break;
+	case KEY_NEW_RATE_LIMIT_BURST_SADDR:
+		f->new_rate_limit_burst_saddr = c->int_value;
 		break;
 	default:
 		return -1;

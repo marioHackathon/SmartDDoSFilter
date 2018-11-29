@@ -651,6 +651,37 @@ static int run_farm_rules_gen_srv(char *buf, struct farm *f, int family, char * 
 	return 0;
 }
 
+static int run_farm_rules_policies(char *buf, struct farm *f, int action)
+{
+	char action_str[255] = { 0 };
+	char name[255] = { 0 };
+
+	if (f->mode != VALUE_MODE_DNAT && f->mode != VALUE_MODE_SNAT)
+		return 0;
+
+	switch (action) {
+	case ACTION_DELETE:
+		sprintf(action_str, "delete");
+		break;
+	default:
+		sprintf(action_str, "add");
+		break;
+	}
+
+	if (f->new_rate_limit_saddr > 0) {
+		if (f->new_rate_limit_burst_saddr > 0)
+			sprintf(buf, "%s ; %s rule %s %s ct state new meter %s-%s { ip saddr limit rate over %d/second burst %d packets } log prefix \"%s-%s\" drop",
+				buf, action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_NEW_CONN_RATE_LIMIT, f->name, f->new_rate_limit_saddr,
+				f->new_rate_limit_burst_saddr, POLICY_LOG_NEW_RATE_LIMIT, f->name);
+		else
+			sprintf(buf, "%s ; %s rule %s %s ct state new meter %s-%s { ip saddr limit rate over %d/second } log prefix \"%s-%s\" drop",
+				buf, action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_NEW_CONN_RATE_LIMIT, f->name, f->new_rate_limit_saddr,
+				POLICY_LOG_NEW_RATE_LIMIT, f->name);
+	}
+
+	return 0;
+}
+
 static int run_farm_rules(struct nft_ctx *ctx, struct farm *f, int family, int action)
 {
 	char buf[NFTLB_MAX_CMD] = { 0 };
@@ -659,6 +690,9 @@ static int run_farm_rules(struct nft_ctx *ctx, struct farm *f, int family, int a
 	int mark;
 
 	run_farm_rules_gen_chains(buf, f, f->name, family, action);
+
+	/* security fules */
+	run_farm_rules_policies(buf, f, action);
 
 	/* input log */
 	if (f->log & VALUE_LOG_INPUT)

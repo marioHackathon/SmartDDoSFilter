@@ -218,6 +218,11 @@ static void config_value(const char *value)
 	case KEY_ACTION:
 		c.int_value = config_value_action(value);
 		break;
+	case KEY_NEW_RATE_LIMIT_SADDR:
+		c.int_value = atoi(value);
+		break;
+	case KEY_NEW_RATE_LIMIT_BURST_SADDR:
+		c.int_value = atoi(value);
 		break;
 	default:
 		c.str_value = (char *)value;
@@ -274,6 +279,10 @@ static int config_key(const char *key)
 		return KEY_PRIORITY;
 	if (strcmp(key, CONFIG_KEY_ACTION) == 0)
 		return KEY_ACTION;
+	if (strcmp(key, CONFIG_KEY_NEW_RATE_LIMIT_SADDR) == 0)
+		return KEY_NEW_RATE_LIMIT_SADDR;
+	if (strcmp(key, CONFIG_KEY_NEW_RATE_LIMIT_BURST_SADDR) == 0)
+		return KEY_NEW_RATE_LIMIT_BURST_SADDR;
 
 	return -1;
 }

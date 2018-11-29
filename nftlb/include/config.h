@@ -33,7 +33,7 @@
 #define CONFIG_KEY_FAMILY		"family"
 #define CONFIG_KEY_ETHADDR		"ether-addr"
 #define CONFIG_KEY_VIRTADDR		"virtual-addr"
-#define CONFIG_KEY_VIRTPORTS		"virtual-ports"
+#define CONFIG_KEY_VIRTPORTS	"virtual-ports"
 #define CONFIG_KEY_IPADDR		"ip-addr"
 #define CONFIG_KEY_SRCADDR		"source-addr"
 #define CONFIG_KEY_PORTS		"ports"
@@ -48,6 +48,8 @@
 #define CONFIG_KEY_WEIGHT		"weight"
 #define CONFIG_KEY_PRIORITY		"priority"
 #define CONFIG_KEY_ACTION		"action"
+#define CONFIG_KEY_NEW_RATE_LIMIT_SADDR		"new-rate-limit-saddr"
+#define CONFIG_KEY_NEW_RATE_LIMIT_BURST_SADDR		"new-rate-limit-burst-saddr"
 
 #define CONFIG_VALUE_FAMILY_IPV4	"ipv4"
 #define CONFIG_VALUE_FAMILY_IPV6	"ipv6"

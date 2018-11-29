@@ -86,6 +86,10 @@ enum actions {
 #define VALUE_LOG_FORWARD		(1 << 1)
 #define VALUE_LOG_OUTPUT		(1 << 2)
 
+#define POLICY_LOG_NEW_RATE_LIMIT	"DoS-SYNFlood"
+
+#define METER_POLICY_NEW_CONN_RATE_LIMIT	"newconns-ratelimit"
+
 struct farm {
 	struct list_head	list;
 	int			action;
@@ -113,6 +117,8 @@ struct farm {
 	int			total_bcks;
 	int			bcks_available;
 	int			bcks_are_marked;
+	int			new_rate_limit_saddr;
+	int			new_rate_limit_burst_saddr;
 	struct list_head	backends;
 };
 
