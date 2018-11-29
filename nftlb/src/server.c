@@ -199,7 +199,7 @@ static int send_delete_response(struct nftlb_http_state *state)
 					      "error reloading farm");
 			goto delete_end;
 		}
-		ret = farm_s_rulerize();
+		ret = obj_rulerize();
 		if (ret != 0) {
 			config_print_response(&state->body_response,
 					      "error generating rules");
@@ -212,7 +212,7 @@ static int send_delete_response(struct nftlb_http_state *state)
 					      "error stopping farm");
 			goto delete_end;
 		}
-		ret = farm_s_rulerize();
+		ret = obj_rulerize();
 		if (ret != 0) {
 			config_print_response(&state->body_response,
 					      "error generating rules");
@@ -252,7 +252,7 @@ static int send_post_response(struct nftlb_http_state *state)
 		goto post_end;
 	}
 
-	if (farm_s_rulerize() != 0) {
+	if (obj_rulerize() != 0) {
 		config_print_response(&state->body_response,
 				      "error generating rules");
 		goto post_end;
@@ -457,7 +457,7 @@ void server_fini(void)
 
 void server_set_host(char *host)
 {
-	nftserver.host = malloc(strlen(host));
+	nftserver.host = malloc(strlen(host)+1);
 
 	if (!nftserver.host) {
 		syslog(LOG_ERR, "No memory available to allocate the server host");

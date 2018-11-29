@@ -72,6 +72,13 @@ void obj_set_dsr_counter(int new_value)
 		dsr_counter = new_value;
 }
 
+static void obj_config_init(void)
+{
+	config_pair_init(current_obj.c);
+	current_obj.fptr = NULL;
+	current_obj.bptr = NULL;
+}
+
 struct obj_config * obj_get_current_object(void)
 {
 	return &current_obj;
@@ -233,7 +240,7 @@ int obj_set_attribute(struct config_pair *c, int actionable)
 
 int obj_set_attribute_string(char *src, char **dst)
 {
-	*dst = (char *)malloc(strlen(src));
+	*dst = (char *)malloc(strlen(src)+1);
 
 	if (!*dst) {
 		syslog(LOG_ERR, "Attribute memory allocation error");
@@ -250,7 +257,8 @@ void obj_print(void)
 	farm_s_print();
 }
 
-void obj_rulerize(void)
+int obj_rulerize(void)
 {
-	farm_s_rulerize();
+	obj_config_init();
+	return farm_s_rulerize();
 }
