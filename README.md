@@ -51,53 +51,52 @@ Firewall/LB: The Load Balancer will be used as a firewall and a gateway, nftable
 
 2 Backends: They contain apache2 web server with the modsecurity module. The will use LUA scripting language to communicate with nftlb daemon.
 
-# Nftlb Model
+# Nftlb API
 
 ```JSON
-  “farms” : [
+  "farms" : [
       {
         // service parameters
-         “name” : “lb01”,
-         “family” : “ipv4”,                	// ipv4 / ipv6 / dual
-         “virtual-addr” : “192.168.0.100”, 	// Virtual address
-         “virtual-ports” : “80”,            // Service ports to listen
-         “source-addr” : “192.168.0.101”, 	// no masquerade, use source nat address
-         “mode” : “snat”,             	// snat / dnat / dsr
-         “protocol” : “tcp”,          	// tcp / udp / sctp / all
-         “helper” : “sip”,            	// sip / ftp/ tftp / …
-         “scheduler” : “weight”,        // rr / weight / hash / symhash
+         "name" : "lb01",
+         "family" : "ipv4",                	// ipv4 / ipv6 / dual
+         "virtual-addr" : "192.168.0.100", 	// Virtual address
+         "virtual-ports" : "80",            // Service ports to listen
+         "source-addr" : "192.168.0.101", 	// no masquerade, use source nat address
+         "mode" : "snat",             	// snat / dnat / dsr
+         "protocol" : "tcp",          	// tcp / udp / sctp / all
+         "helper" : "sip",            	// sip / ftp/ tftp / …
+         "scheduler" : "weight",        // rr / weight / hash / symhash
 										// (prio is used intrinsically)
-         "state" : “up”,            	// up / down / off
-         “mark” : “0x200”,            	// flow ct mark per virtual service
+         "state" : "up",            	// up / down / off
+         "mark" : "0x200",            	// flow ct mark per virtual service
 
 		*// security parameters*
-        * “valid-tcp” : “on”,            		// Validate the TCP protocol*
-        * “est-connlimit-saddr” : “10”,         // Set a limit of established connections for service*
-        * “new-ratelimit-saddr” : “10”,         // Set a maximun rate for new connections*
-        * “new-ratelimit-burst-saddr” : “10”,   // Allow a rate of extra new connections*
-        * “rst-ratelimit-saddr” : “10”,         // Set a maximun rate for TCP reset packets*
+         "valid-tcp" : "on",            		// Validate the TCP protocol*
+         "est-connlimit-saddr" : "10",         // Set a limit of established connections for service*
+         "new-ratelimit-saddr" : "10",         // Set a maximun rate for new connections*
+         "new-ratelimit-burst-saddr" : "10",   // Allow a rate of extra new connections*
+         "rst-ratelimit-saddr" : "10",         // Set a maximun rate for TCP reset packets*
 
-         “backends” : [
+         "backends" : [
             {
-               "name" : “bck0”,        // backend ID
+               "name" : "bck0",        // backend ID
                "ip-addr" : "192.168.0.10",    // backend ip addr
                "ports" : "80",        // backend port (port or empty)
-               "weight" : “5”,        // backend weight
-               "priority" : “5”,        // backend prio
-               "state" : “up”,        // up / down / off
+               "weight" : "5",        // backend weight
+               "priority" : "5",        // backend prio
+               "state" : "up",        // up / down / off
                "mark" : "0x01",        // flow ct mark per backend
             },
          ],
 
-         “policies” : [
+         "policies" : [
             {
-               "name" : “blacklist01”,    // policy name
+               "name" : "blacklist01",    // policy name
             },
             {
-               "name" : “whitelist01”,    // policy name
+               "name" : "whitelist01",    // policy name
             }
-         ],
-
+         ]
       }
    ],
 }
