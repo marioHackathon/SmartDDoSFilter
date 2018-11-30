@@ -493,7 +493,7 @@ void server_set_key(char *key)
 
 	if (!key) {
 		srand((unsigned int) time(0) + getpid());
-		for (i = 0; i < SRV_KEY_LENGTH; ++i)
+		for (i = 0; i < SRV_KEY_LENGTH; i++)
 			nftserver.key[i] = rand() % 94 + 33;
 		nftserver.key[i] = '\0';
 	} else
