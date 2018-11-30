@@ -16,7 +16,7 @@ Dependencies:
 - Netfilter & nftables as datapath
 - libmnl to communicate with the kernel through netlink
 - libev as events library for the web service
-- libjson: JSON parser for the API
+- libjansson: JSON parser for the API
 
 ### wrk:
 
@@ -26,7 +26,7 @@ Tool to execute stress tests of HTTP backend applications
 
 In Modsecurity, it is usedLua scripting for the integration with the nftlb API daemon.
 
-## First Milestone:
+## Tasks:
 
 * * [x] Creating lab environment
 
@@ -45,7 +45,7 @@ In Modsecurity, it is usedLua scripting for the integration with the nftlb API d
 
 * Tests
 * * * [x] Add funtional test for the new nftlb feature, limit the rate of new conns.
-
+* * * [x] Add funtional test for the new nftlb feature, limit the rate of reset TCP packages per second.
 
 ## Lab description
 
@@ -90,6 +90,7 @@ apt-get install -y
 * Download the most recent version of nftlb and install it
 
 git clone https://github.com/zevenet/nftlb
+
 cd nftlb
 
 autoreconf -fi
