@@ -43,6 +43,10 @@ In Modsecurity, it is usedLua scripting for the integration with the nftlb API d
 * * * [x] Add nftlb infraestructure to support b/w lists.
 * * * [x] L7 inspection (Apache+modsecurity) integrated with nftlb.
 
+* Tests
+* * * [x] Add funtional test for the new nftlb feature, limit the rate of new conns.
+
+
 ## Lab description
 
 Client: Several scripts will be used to attack backends through the Load Balancer. The client uses several IPs to simulate several clients.
