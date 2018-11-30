@@ -30,6 +30,7 @@
 #include "config.h"
 #include "farms.h"
 #include "backends.h"
+#include "farmpolicy.h"
 #include "policies.h"
 #include "elements.h"
 
@@ -281,6 +282,8 @@ static int config_key(const char *key)
 		return KEY_STATE;
 	if (strcmp(key, CONFIG_KEY_BCKS) == 0)
 		return KEY_BCKS;
+	if (strcmp(key, CONFIG_KEY_POLICIES) == 0)
+		return KEY_FPOLICIES;
 	if (strcmp(key, CONFIG_KEY_WEIGHT) == 0)
 		return KEY_WEIGHT;
 	if (strcmp(key, CONFIG_KEY_PRIORITY) == 0)
@@ -302,7 +305,8 @@ static int config_key(const char *key)
 static int jump_config_value(int level, int key)
 {
 	if ((level == LEVEL_INIT && key != KEY_FARMS) ||
-	    (key == KEY_BCKS && level != LEVEL_FARMS))
+	    (key == KEY_BCKS && level != LEVEL_FARMS) ||
+	    (key == KEY_FPOLICIES && level != LEVEL_FARMS))
 		return -1;
 
 	return 0;
@@ -434,6 +438,7 @@ static void add_dump_list(json_t *obj, const char *objname, int object,
 {
 	struct farm *f;
 	struct backend *b;
+	struct farmpolicy *fp;
 	struct policy *p;
 	struct element *e;
 	json_t *jarray = json_array();
@@ -466,6 +471,7 @@ static void add_dump_list(json_t *obj, const char *objname, int object,
 			add_dump_obj(item, "priority", value);
 			add_dump_obj(item, "state", obj_print_state(f->state));
 			add_dump_list(item, CONFIG_KEY_BCKS, LEVEL_BCKS, &f->backends, NULL);
+			add_dump_list(item, CONFIG_KEY_POLICIES, LEVEL_FARMPOLICY, &f->policies, NULL);
 			json_array_append_new(jarray, item);
 		}
 		break;
@@ -481,6 +487,13 @@ static void add_dump_list(json_t *obj, const char *objname, int object,
 			config_dump_hex(value, b->mark);
 			add_dump_obj(item, "mark", value);
 			add_dump_obj(item, "state", obj_print_state(b->state));
+			json_array_append_new(jarray, item);
+		}
+		break;
+	case LEVEL_FARMPOLICY:
+		list_for_each_entry(fp, head, list) {
+			item = json_object();
+			add_dump_obj(item, "name", fp->name);
 			json_array_append_new(jarray, item);
 		}
 		break;

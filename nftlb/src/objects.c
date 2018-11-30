@@ -24,6 +24,7 @@
 #include "list.h"
 #include "farms.h"
 #include "backends.h"
+#include "farmpolicy.h"
 #include "policies.h"
 #include "elements.h"
 
@@ -98,6 +99,7 @@ static void obj_config_init(void)
 	config_pair_init(current_obj.c);
 	current_obj.fptr = NULL;
 	current_obj.bptr = NULL;
+	current_obj.fpptr = NULL;
 	current_obj.pptr = NULL;
 	current_obj.eptr = NULL;
 }
@@ -254,6 +256,12 @@ int obj_set_attribute(struct config_pair *c, int actionable)
 		if (actionable)
 			farm_pos_actionable(c);
 		break;
+	case LEVEL_FARMPOLICY:
+		farmpolicy_set_attribute(c);
+
+		if (actionable)
+			farm_pos_actionable(c);
+		break;
 	default:
 		return -1;
 	}
@@ -278,6 +286,7 @@ int obj_set_attribute_string(char *src, char **dst)
 void obj_print(void)
 {
 	farm_s_print();
+	policies_s_print();
 }
 
 int obj_rulerize(void)

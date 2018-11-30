@@ -118,6 +118,7 @@ struct farm {
 	int			rst_rate_limit_saddr;
 	int			est_conn_limit_saddr;
 	struct list_head	backends;
+	struct list_head	policies;
 };
 
 

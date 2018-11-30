@@ -57,6 +57,7 @@ enum levels {
 	LEVEL_INIT,
 	LEVEL_FARMS,
 	LEVEL_BCKS,
+	LEVEL_FARMPOLICY,
 	LEVEL_POLICIES,
 	LEVEL_ELEMENTS
 };
@@ -83,6 +84,7 @@ enum keys {
 	KEY_MARK,
 	KEY_STATE,
 	KEY_BCKS,
+	KEY_FPOLICIES,
 	KEY_WEIGHT,
 	KEY_PRIORITY,
 	KEY_ACTION,
@@ -109,6 +111,7 @@ struct obj_config {
 	struct backend		*bptr;
 	struct policy		*pptr;
 	struct element		*eptr;
+	struct farmpolicy	*fpptr;
 	struct config_pair	*c;
 };
 

@@ -27,6 +27,7 @@
 
 #include "farms.h"
 #include "backends.h"
+#include "farmpolicy.h"
 #include "objects.h"
 #include "config.h"
 #include "nft.h"
@@ -73,6 +74,7 @@ static struct farm * farm_create(char *name)
 	pfarm->est_conn_limit_saddr = DEFAULT_EST_LIMIT_SADDR;
 
 	init_list_head(&pfarm->backends);
+	init_list_head(&pfarm->policies);
 
 	pfarm->total_weight = 0;
 	pfarm->priority = DEFAULT_PRIORITY;
@@ -86,6 +88,7 @@ static struct farm * farm_create(char *name)
 static int farm_delete(struct farm *pfarm)
 {
 	backend_s_delete(pfarm);
+	farmpolicy_s_delete(pfarm);
 	list_del(&pfarm->list);
 
 	if (pfarm->name && strcmp(pfarm->name, "") != 0)
@@ -319,6 +322,8 @@ static void farm_print(struct farm *f)
 
 	if (f->total_bcks != 0)
 		backend_s_print(f);
+
+	farmpolicy_s_print(f);
 }
 
 void farm_s_print(void)
