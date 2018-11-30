@@ -35,19 +35,23 @@ In Modsecurity, it is usedLua scripting for the integration with the nftlb API d
 * Create following attacks:
 * * * [x] syn_flood
 * * * [x] rst_flood
+* * * [x] bogus_tcp
 
 * Tools improvements
 * * * [x] Modify wrk to set the source IP
-* * * [ ] Modify wrk to allow config file
+* * * [x] Modify wrk to allow config file
 
 * Create firewall defend rules
-* * * [x] Support to limit TCP requests based on rate IP source, util for atacks like "syn_flood".
+* * * [x] Support in nftlb to limit TCP requests based on rate IP source, useful for atacks like "syn_flood".
+* * * [x] Support in nftlb to limit TCP RST packets per second, useful for atacks like "rst_flood".
+* * * [x] Support in nftlb to limit the number of established connections per source IP.
 * * * [x] Add nftlb infraestructure to support b/w lists.
 * * * [x] L7 inspection (Apache+modsecurity) integrated with nftlb.
 
 * Tests
 * * * [x] Add funtional test for the new nftlb feature, limit the rate of new conns.
 * * * [x] Add funtional test for the new nftlb feature, limit the rate of reset TCP packages per second.
+* * * [x] Add funtional test for the new nftlb feature, limit the number of established connections per source IP.
 
 ## Lab description
 
@@ -59,7 +63,7 @@ Firewall/LB: The Load Balancer will be used as a firewall and a gateway, nftable
 
 ### Compile nftlb
 
-The operative system used is Debian Buster. In this Debian version, nftlib supports all features of nftlb, so it is not necessarty to compile handly the library. 
+The operative system used is Debian Buster. In this Debian version, nftlib supports all features of nftlb, so it is not necessarty to compile handly the library.
 
 * Install required dependencies
 
@@ -70,22 +74,22 @@ apt-get install -y
     git
     bison
     flex
-    binutils 
-    build-essential 
-    autoconf 
-    libtool 
-    pkg-config 
-    libgmp-dev 
-    libreadline-dev 
-    libjansson-dev 
-    libev-dev 
-    cmake 
-    curl 
-    dnsutils 
-    libmnl-dev 
-    libnftnl-dev 
-    libnftables-dev 
-    libnftables0 
+    binutils
+    build-essential
+    autoconf
+    libtool
+    pkg-config
+    libgmp-dev
+    libreadline-dev
+    libjansson-dev
+    libev-dev
+    cmake
+    curl
+    dnsutils
+    libmnl-dev
+    libnftnl-dev
+    libnftables-dev
+    libnftables0
     libxtables-dev
 `
 
@@ -120,16 +124,16 @@ We need to modify the repository of a stress testing tool called wrk in order to
   "farms" : [
       {
          "name" : "lb01",
-         "family" : "ipv4",                	
-         "virtual-addr" : "192.168.0.100", 	
-         "virtual-ports" : "80",            
-         "source-addr" : "192.168.0.101", 
-         "mode" : "snat",             	
-         "protocol" : "tcp",          	
-         "helper" : "sip",            	
-         "scheduler" : "weight",        
-         "state" : "up",            	
-         "mark" : "0x200",            	
+         "family" : "ipv4",
+         "virtual-addr" : "192.168.0.100",
+         "virtual-ports" : "80",
+         "source-addr" : "192.168.0.101",
+         "mode" : "snat",
+         "protocol" : "tcp",
+         "helper" : "sip",
+         "scheduler" : "weight",
+         "state" : "up",
+         "mark" : "0x200",
 
          "valid-tcp" : "on",         		// Validate the TCP protocol*
          "est-connlimit-saddr" : "10",         	// Set a limit of established connections for service*
@@ -139,16 +143,16 @@ We need to modify the repository of a stress testing tool called wrk in order to
 
          "backends" : [
             {
-               "name" : "bck0",        
+               "name" : "bck0",
                "ip-addr" : "192.168.0.10",
-               "ports" : "80",        
-               "weight" : "5",        
-               "priority" : "5",      
-               "state" : "up",        
-               "mark" : "0x01",       
+               "ports" : "80",
+               "weight" : "5",
+               "priority" : "5",
+               "state" : "up",
+               "mark" : "0x01",
             },
          ],
-	 
+
          "policies" : [
             {
                "name" : "blacklist01",    // policy name

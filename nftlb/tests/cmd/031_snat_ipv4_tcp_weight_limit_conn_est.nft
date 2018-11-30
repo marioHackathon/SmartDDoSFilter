@@ -1,0 +1,26 @@
+table ip nftlb {
+	map tcp-services {
+		type ipv4_addr . inet_service : verdict
+		elements = { 172.16.64.91 . http : goto lb01 }
+	}
+
+	map tcp-services-back {
+		type ipv4_addr . inet_service : ipv4_addr
+	}
+
+	chain prerouting {
+		type nat hook prerouting priority 0; policy accept;
+		ip daddr . tcp dport vmap @tcp-services
+	}
+
+	chain postrouting {
+		type nat hook postrouting priority 100; policy accept;
+		ct mark 0x80000000/1 masquerade
+		snat to ip daddr . tcp dport map @tcp-services-back
+	}
+
+	chain lb01 {
+		tcp flags rst meter rst-ratelimit-lb01 size 65535 { ip saddr limit rate over 10/second burst 15 packets}  log prefix "DoS-RSTFlood-lb01" drop
+		ct mark set 0x80000000 dnat to numgen random mod 5 map { 0-4 : 172.16.64.116 }
+	}
+}

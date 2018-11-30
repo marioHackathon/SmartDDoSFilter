@@ -51,6 +51,7 @@
 #define CONFIG_KEY_NEW_RATE_LIMIT_SADDR		"new-rate-limit-saddr"
 #define CONFIG_KEY_NEW_RATE_LIMIT_BURST_SADDR		"new-rate-limit-burst-saddr"
 #define CONFIG_KEY_RST_RATE_LIMIT_SADDR		"rst-rate-limit-saddr"
+#define CONFIG_KEY_EST_CONN_LIMIT_SADDR		"est-conn-limit-saddr"
 #define CONFIG_KEY_POLICIES		"policies"
 #define CONFIG_KEY_TYPE			"type"
 #define CONFIG_KEY_TIMEOUT		"timeout"

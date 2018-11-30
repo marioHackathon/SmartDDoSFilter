@@ -229,6 +229,9 @@ static void config_value(const char *value)
 	case KEY_RST_RATE_LIMIT_SADDR:
 		c.int_value = atoi(value);
 		break;
+	case KEY_EST_CONN_LIMIT_SADDR:
+		c.int_value = atoi(value);
+		break;
 	default:
 		c.str_value = (char *)value;
 	}
@@ -290,6 +293,8 @@ static int config_key(const char *key)
 		return KEY_NEW_RATE_LIMIT_BURST_SADDR;
 	if (strcmp(key, CONFIG_KEY_RST_RATE_LIMIT_SADDR) == 0)
 		return KEY_RST_RATE_LIMIT_SADDR;
+	if (strcmp(key, CONFIG_KEY_EST_CONN_LIMIT_SADDR) == 0)
+		return KEY_EST_CONN_LIMIT_SADDR;
 
 	return -1;
 }
