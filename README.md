@@ -58,14 +58,13 @@ Firewall/LB: The Load Balancer will be used as a firewall and a gateway, nftable
 ## Tests description
 
 We have put special attention to prove that everything developed is working as expected, related with this, we are developing many shellscripts in order to perform TCP and HTTP flood attacks agains the system in order to check that the security apply to the system is working properly. Those scripts are:
-syn_flood
-rst_flood
-bogus_flood
-tcp_established_conn
-http_flood
+* syn_flood
+* rst_flood
+* bogus_flood
+* tcp_established_conn
+* http_flood
 
-
-We are need to modify the repository of a stress testing tool called wrk in order to allow the tool to retrieve IPs from a config file.
+We need to modify the repository of a stress testing tool called wrk in order to allow the tool to retrieve IPs from a config file.
 
 # Nftlb API
 
