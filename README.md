@@ -55,6 +55,42 @@ Firewall/LB: The Load Balancer will be used as a firewall and a gateway, nftable
 
 2 Backends: They contain apache2 web server with the modsecurity module. The will use LUA scripting language to communicate with nftlb daemon.
 
+### Compile nftlb
+
+The operative system used is Debian Buster. In this Debian version, nftlib supports all features of nftlb, so it is not necessarty to compile handly the library. 
+
+* Install required dependencies
+apt-get update
+apt-get install -y \
+    git \
+    bison \
+    flex \
+    binutils \
+    build-essential \
+    autoconf \
+    libtool \
+    pkg-config \
+    libgmp-dev \
+    libreadline-dev \
+    libjansson-dev \
+    libev-dev \
+    cmake \
+    curl \
+    dnsutils \
+    libmnl-dev \
+    libnftnl-dev \
+    libnftables-dev \
+    libnftables0 \
+    libxtables-dev
+
+* Download the most recent version of nftlb and install it
+git clone https://github.com/zevenet/nftlb
+cd nftlb
+autoreconf -fi
+./configure
+make
+make install
+
 ## Tests description
 
 We have put special attention to prove that everything developed is working as expected, related with this, we are developing many shellscripts in order to perform TCP and HTTP flood attacks agains the system in order to check that the security apply to the system is working properly. Those scripts are:
