@@ -18,6 +18,8 @@ Dependencies:
 - libev as events library for the web service
 - libjansson: JSON parser for the API
 
+To obtain more information about the **nftlb usage**, please use the **Readme of the nfllb proyect**.
+
 ### wrk:
 
 Tool to execute stress tests of HTTP backend applications
