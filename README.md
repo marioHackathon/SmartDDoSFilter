@@ -60,35 +60,44 @@ Firewall/LB: The Load Balancer will be used as a firewall and a gateway, nftable
 The operative system used is Debian Buster. In this Debian version, nftlib supports all features of nftlb, so it is not necessarty to compile handly the library. 
 
 * Install required dependencies
+
+`
 apt-get update
-apt-get install -y \
-    git \
-    bison \
-    flex \
-    binutils \
-    build-essential \
-    autoconf \
-    libtool \
-    pkg-config \
-    libgmp-dev \
-    libreadline-dev \
-    libjansson-dev \
-    libev-dev \
-    cmake \
-    curl \
-    dnsutils \
-    libmnl-dev \
-    libnftnl-dev \
-    libnftables-dev \
-    libnftables0 \
+
+apt-get install -y
+    git
+    bison
+    flex
+    binutils 
+    build-essential 
+    autoconf 
+    libtool 
+    pkg-config 
+    libgmp-dev 
+    libreadline-dev 
+    libjansson-dev 
+    libev-dev 
+    cmake 
+    curl 
+    dnsutils 
+    libmnl-dev 
+    libnftnl-dev 
+    libnftables-dev 
+    libnftables0 
     libxtables-dev
+`
 
 * Download the most recent version of nftlb and install it
+
 git clone https://github.com/zevenet/nftlb
 cd nftlb
+
 autoreconf -fi
+
 ./configure
+
 make
+
 make install
 
 ## Tests description
