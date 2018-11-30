@@ -60,7 +60,7 @@ static struct policy * policy_create(char *name)
 
 static int policy_delete(struct policy *p)
 {
-//	element_s_delete(pfarm);
+	element_s_delete(p);
 	list_del(&p->list);
 
 	if (p->name && strcmp(p->name, "") != 0)
@@ -71,21 +71,7 @@ static int policy_delete(struct policy *p)
 
 	return 0;
 }
-/*
-static int farm_set_mode(struct farm *f, int new_value)
-{
-	int old_value = f->mode;
 
-	syslog(LOG_DEBUG, "%s():%d: farm %s old mode %d new mode %d", __FUNCTION__, __LINE__, f->name, old_value, new_value);
-
-	if (old_value != new_value) {
-		f->mode = new_value;
-		farm_set_netinfo(f);
-	}
-
-	return 0;
-}
-*/
 static void policy_print(struct policy *p)
 {
 	syslog(LOG_DEBUG," [policy] ");
@@ -96,8 +82,8 @@ static void policy_print(struct policy *p)
 	syslog(LOG_DEBUG,"    [total_elem] %d", p->total_elem);
 	syslog(LOG_DEBUG,"    *[action] %d", p->action);
 
-//	if (p->total_elem != 0)
-//		elements_s_print(p);
+	if (p->total_elem != 0)
+		element_s_print(p);
 }
 
 void policies_s_print(void)
