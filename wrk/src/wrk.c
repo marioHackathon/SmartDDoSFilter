@@ -15,8 +15,15 @@ static struct config {
     bool     latency;
     char    *host;
     char    *script;
+    char    *cfgFile;
     SSL_CTX *ctx;
 } cfg;
+
+static struct bufferStruct{
+    uint8_t ip_buffer [400];
+    int weight [100];
+    int n_ip;
+} cfgBuffer;
 
 static struct {
     stats *latency;
@@ -47,6 +54,7 @@ static void usage() {
            "    -c, --connections <N>  Connections to keep open   \n"
            "    -d, --duration    <T>  Duration of test           \n"
            "    -t, --threads     <N>  Number of threads to use   \n"
+           "    -f, --file        <S>  Configuration file to use  \n"
            "                                                      \n"
            "    -s, --script      <S>  Load Lua script file       \n"
            "    -H, --header      <H>  Add header to request      \n"
@@ -66,7 +74,7 @@ int main(int argc, char **argv) {
         usage();
         exit(1);
     }
-
+    cfgBuffer.n_ip = 0;
     char *schema  = copy_url_part(url, &parts, UF_SCHEMA);
     char *host    = copy_url_part(url, &parts, UF_HOST);
     char *port    = copy_url_part(url, &parts, UF_PORT);
@@ -233,6 +241,43 @@ void *thread_main(void *arg) {
     return NULL;
 }
 
+int getIpsFromFile ( )//struct bufferStruct * argument  )
+{
+  FILE * fp;
+  fp = fopen( cfg.cfgFile, "r" );
+  char str[999];
+  int iterator = 1;
+  int * wPointer  = NULL;
+  uint8_t * ipPointer = NULL;
+
+  if ( fp == NULL )
+  {
+    printf("Error while opening the configuration file\n");
+    exit (1);
+  }
+
+  // Set pointers to first memory
+  ipPointer = cfgBuffer.ip_buffer;
+  wPointer  = cfgBuffer.weight;
+  while ( fscanf( fp, "%s", str ) != EOF )
+  {
+    if ( iterator%2 != 0 )
+    {
+      sscanf(str, "%hhu.%hhu.%hhu.%hhu", ipPointer, ipPointer + 1, ipPointer + 2, ipPointer + 3);
+      ipPointer = ipPointer + 4;
+    }
+    else
+    {
+      sscanf(str, "%u", wPointer );
+      wPointer += 1;
+    }
+    iterator +=1;
+  }
+  cfgBuffer.n_ip = (iterator-1)/2;
+  fclose( fp );
+  return 0;
+}
+
 int  getRandoms(int lower, int upper
                              )
 {
@@ -250,14 +295,18 @@ static int connect_socket(thread *thread, connection *c) {
     flags = fcntl(fd, F_GETFL, 0);
     fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 //    // Bind to a specific network interface (and optionally a specific local port)
-    char my_ip[50]="";
-    int ip_tail = getRandoms(2,10);
-    sprintf(my_ip,"172.16.1.%d",ip_tail);
-    struct sockaddr_in localaddr;
-    localaddr.sin_family = AF_INET;
-    localaddr.sin_addr.s_addr = inet_addr(my_ip);
-    localaddr.sin_port = 0;  // Any local port will do
-    bind(fd, (struct sockaddr *)&localaddr, sizeof(localaddr));
+    if ( cfgBuffer.n_ip > 0 )
+    {
+      char my_ip[50]="";
+      int index = getRandoms(1,cfgBuffer.n_ip);
+      uint8_t * ipPointer = cfgBuffer.ip_buffer + ((index - 1) * 4);
+      sprintf( my_ip,"%u.%u.%u.%u", *ipPointer, *(ipPointer + 1), *(ipPointer + 2), *(ipPointer + 3) );
+      struct sockaddr_in localaddr;
+      localaddr.sin_family = AF_INET;
+      localaddr.sin_addr.s_addr = inet_addr(my_ip);
+      localaddr.sin_port = 0;  // Any local port will do
+      bind(fd, (struct sockaddr *)&localaddr, sizeof(localaddr));
+    }
 
     if (connect(fd, addr->ai_addr, addr->ai_addrlen) == -1) {
         if (errno != EINPROGRESS) goto error;
@@ -485,6 +534,7 @@ static char *copy_url_part(char *url, struct http_parser_url *parts, enum http_p
 
 static struct option longopts[] = {
     { "connections", required_argument, NULL, 'c' },
+    { "cfgFile",     required_argument, NULL, 'f' },
     { "duration",    required_argument, NULL, 'd' },
     { "threads",     required_argument, NULL, 't' },
     { "script",      required_argument, NULL, 's' },
@@ -506,7 +556,7 @@ static int parse_args(struct config *cfg, char **url, struct http_parser_url *pa
     cfg->duration    = 10;
     cfg->timeout     = SOCKET_TIMEOUT_MS;
 
-    while ((c = getopt_long(argc, argv, "t:c:d:s:H:T:Lrv?", longopts, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "t:c:d:f:s:H:T:Lrv?", longopts, NULL)) != -1) {
         switch (c) {
             case 't':
                 if (scan_metric(optarg, &cfg->threads)) return -1;
@@ -516,6 +566,10 @@ static int parse_args(struct config *cfg, char **url, struct http_parser_url *pa
                 break;
             case 'd':
                 if (scan_time(optarg, &cfg->duration)) return -1;
+                break;
+            case 'f':
+                cfg->cfgFile = optarg;
+                getIpsFromFile();
                 break;
             case 's':
                 cfg->script = optarg;
