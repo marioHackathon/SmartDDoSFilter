@@ -1,0 +1,5 @@
+[TESTS]
+  Improve the usage of wrk, making use of weight values for each IP.
+  Create http flood and bogus flood for testing purpose.
+[WAF]
+  Improve the WAF rules set.
