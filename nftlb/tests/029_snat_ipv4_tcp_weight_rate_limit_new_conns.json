@@ -10,7 +10,7 @@
 			"scheduler" : "weight",
 			"state" : "up",
 			"new-rate-limit-saddr" : "10",
-			"new-rate-limit-burst-saddr" : "5",
+			"new-rate-limit-burst-saddr" : "15",
 			"backends" : [
 				{
 					"name" : "bck0",
