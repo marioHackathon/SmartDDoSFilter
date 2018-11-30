@@ -678,6 +678,12 @@ static int run_farm_rules_policies(char *buf, struct farm *f, int action)
 				buf, action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_NEW_CONN_RATE_LIMIT, f->name, f->new_rate_limit_saddr,
 				POLICY_LOG_NEW_RATE_LIMIT, f->name);
 	}
+	if (f->rst_rate_limit_saddr > 0) {
+		//~ sprintf(buf, "%s ; %s rule %s %s tcp flags rst meter %s-%s { ip saddr limit rate over %d/second } log prefix \"%s-%s\" drop",
+		sprintf(buf, "%s ; %s rule %s %s tcp flags rst meter %s-%s { ip saddr limit rate over %d/second } log prefix \"%s-%s\" drop",
+			buf, action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_RST_RATE_LIMIT, f->name, f->rst_rate_limit_saddr,
+			POLICY_LOG_RST_RATE_LIMIT, f->name);
+	}
 
 	return 0;
 }

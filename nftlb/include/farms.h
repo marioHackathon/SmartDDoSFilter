@@ -79,8 +79,10 @@ enum states {
 #define VALUE_LOG_OUTPUT		(1 << 2)
 
 #define POLICY_LOG_NEW_RATE_LIMIT	"DoS-SYNFlood"
+#define POLICY_LOG_RST_RATE_LIMIT	"DoS-RSTFlood"
 
 #define METER_POLICY_NEW_CONN_RATE_LIMIT	"newconns-ratelimit"
+#define METER_POLICY_RST_RATE_LIMIT			"rst-ratelimit"
 
 struct farm {
 	struct list_head	list;
@@ -111,6 +113,7 @@ struct farm {
 	int			bcks_are_marked;
 	int			new_rate_limit_saddr;
 	int			new_rate_limit_burst_saddr;
+	int			rst_rate_limit_saddr;
 	struct list_head	backends;
 };
 
