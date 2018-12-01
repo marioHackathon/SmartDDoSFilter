@@ -64,7 +64,7 @@ Client: Several scripts will be used to attack backends through the Load Balance
 
 Firewall/LB: The Load Balancer will be used as a firewall and a gateway, nftables/nftlb will provide those features.
 
-2 Backends: They contain apache2 web server with the modsecurity module. The will use LUA scripting language to communicate with nftlb daemon.
+2 Backends: They contain apache2 web server with the modsecurity module. They will use LUA scripting language to communicate with nftlb daemon.
 
 ### Quick started
 
@@ -191,3 +191,5 @@ We need to modify the repository of a stress testing tool called wrk in order to
    ],
 }
 ```
+
+It is also necessary to explain the **new-rate-limit-burst-saddr** concept, the bursty behaviour happens during the communication with some protocols as http. Http it will need to download a high quantity of data during a short time interval but after that it won't need to download that again, it will just reload necessary objects instead, so we could observe that there is a burst in the first web application access, but the majority of the time, will need to load much less.
