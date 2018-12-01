@@ -81,6 +81,7 @@ enum states {
 #define POLICY_LOG_NEW_RATE_LIMIT	"DoS-SYNFlood"
 #define POLICY_LOG_RST_RATE_LIMIT	"DoS-RSTFlood"
 #define POLICY_LOG_EST_CONN_LIMIT	"established-conn-limit"
+#define POLICY_LOG_TCP_STRICT	"tcp-flow-incorrecct"
 
 #define METER_POLICY_NEW_CONN_RATE_LIMIT	"newconns-ratelimit"
 #define METER_POLICY_RST_RATE_LIMIT			"rst-ratelimit"
@@ -117,6 +118,7 @@ struct farm {
 	int			new_rate_limit_burst_saddr;
 	int			rst_rate_limit_saddr;
 	int			est_conn_limit_saddr;
+	char			*tcp_strict;
 	struct list_head	backends;
 	struct list_head	policies;
 };

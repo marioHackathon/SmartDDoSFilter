@@ -135,11 +135,11 @@ We need to modify the repository of a stress testing tool called wrk in order to
          "state" : "up",
          "mark" : "0x200",
 
-         "valid-tcp" : "on",         		// Validate the TCP protocol*
-         "est-connlimit-saddr" : "10",         	// Set a limit of established connections for service*
-         "new-ratelimit-saddr" : "10",         	// Set a maximun rate for new connections*
-         "new-ratelimit-burst-saddr" : "10",   	// Allow a rate of extra new connections*
-         "rst-ratelimit-saddr" : "10",        	// Set a maximun rate for TCP reset packets*
+         "tcp-strict" : "on",         		// Validate the TCP protocol*
+         "est-conn-limit-saddr" : "10",         	// Set a limit of established connections for service*
+         "new-rate-limit-saddr" : "10",         	// Set a maximun rate for new connections*
+         "new-rate-limit-burst-saddr" : "10",   	// Allow a rate of extra new connections*
+         "rst-rate-limit-saddr" : "10",        	// Set a maximun rate for TCP reset packets*
 
          "backends" : [
             {

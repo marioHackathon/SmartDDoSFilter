@@ -298,6 +298,8 @@ static int config_key(const char *key)
 		return KEY_RST_RATE_LIMIT_SADDR;
 	if (strcmp(key, CONFIG_KEY_EST_CONN_LIMIT_SADDR) == 0)
 		return KEY_EST_CONN_LIMIT_SADDR;
+	if (strcmp(key, CONFIG_KEY_TCP_STRICT) == 0)
+		return KEY_TCP_STRICT;
 
 	return -1;
 }
