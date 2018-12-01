@@ -36,7 +36,7 @@
 #define SRV_MAX_BUF			40960
 #define SRV_MAX_HEADER			300
 #define SRV_MAX_IDENT			200
-#define SRV_KEY_LENGTH			16
+#define SRV_KEY_LENGTH			128
 
 #define SRV_PORT_DEF			5555
 
@@ -484,7 +484,7 @@ void server_set_key(char *key)
 	int i;
 
 	if (!nftserver.key) {
-		nftserver.key = (char *)malloc(SRV_MAX_IDENT);
+		nftserver.key = (char *)malloc(SRV_KEY_LENGTH);
 		if (!nftserver.key) {
 			syslog(LOG_ERR, "No memory available to allocate the server key");
 			return;
@@ -497,7 +497,7 @@ void server_set_key(char *key)
 			nftserver.key[i] = rand() % 94 + 33;
 		nftserver.key[i] = '\0';
 	} else
-		snprintf(nftserver.key, SRV_MAX_IDENT, "%s", key);
+		snprintf(nftserver.key, SRV_KEY_LENGTH, "%s", key);
 }
 
 void server_set_ipv6(void)
