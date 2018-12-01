@@ -5,14 +5,16 @@ function print_help ()
 {
   echo "Usage: \"rst_flood.sh -d IP -p PORT\""
   echo -e "It is mandatory to include -d and -p option, script should be run with sudo."
-  echo -e "-d \t --ip-destination \t\t Ip destination to be attacked by rst flood."
-  echo -e "-p \t --port-destination \t\tPort which will be attacked on the remote TCP end point."
+  echo -e "-u \t --url \t\tUrl to be requested, should be like http://www.hackathon.com."
+  echo -e "-c \t --count \t\tNumber of http get requests to be sent."
   echo -e "-i \t --interval \t\tInterval between iterations."
+  echo -e "-H \t --HOST \t\tAdd host header to the curl command."
   exit
 }
 
-ip_destination="";
-port="";
+ip_destination=""
+host=""
+
 
 while [[ $# -gt 0 ]]; do
   ARG="$1"
@@ -31,6 +33,10 @@ while [[ $# -gt 0 ]]; do
       print_help
       shift
       ;;
+    "-H"|"--HOST")
+      host="--header 'Host: www.Hackathon.com'"
+      shift
+      ;;
     *)
       echo "Try rst_flood.sh -h or --help"
       exit
@@ -46,7 +52,7 @@ fi
 iterator=0
 
 while [ $iterator -lt $count ]; do
-  curl $url
+  curl $url $host
   echo $count
   iterator=$(($iterator+1))
 done
