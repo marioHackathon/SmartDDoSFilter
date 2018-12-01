@@ -68,11 +68,11 @@ Firewall/LB: The Load Balancer will be used as a firewall and a gateway, nftable
 
 ### Quick started
 
-The operative system used is Debian Buster. In this Debian version, nftlib supports all features of nftlb, so it is not necessarty to compile handly the library.
+The operating system used is Debian Buster. In this Debian version, nftlib supports all features of nftlb, so it is not necessarty to compile handly the library.
 
 * Install required dependencies
 
-`
+```
 apt-get update
 
 apt-get install -y
@@ -96,31 +96,37 @@ apt-get install -y
     libnftables-dev
     libnftables0
     libxtables-dev
-`
+```
+
+**We had problems with the libraries of nftables as we used older debian packages with some bugs that were fixed already. So finally, we had to compile the latest nftables git libraries: libmnl, libnftnl, nftables from git.netfilter.org
+
 
 * Download the most recent version of nftlb and install it
 
+
+```
 git clone https://github.com/zevenet/nftlb
 
 cd nftlb
-
 autoreconf -fi
-
 ./configure
-
 make
-
 make install
+```
 
 * Configure kernel parameters to enable IP forwarding and to deny invalid tcp connections
 
-`
+Initially, we designed a set of valid TCP sequences but we finally realised that the connection tracking can so already this work by configuring the strict mode.
+
+```
 echo 1 > /proc/sys/net/ipv4/ip_forward
-
 echo 0 > /proc/sys/net/netfilter/nf_conntrack_tcp_be_liberal
-
 echo 0 > /proc/sys/net/netfilter/nf_conntrack_tcp_loose
-`
+```
+
+then, the option *tcp-strict* will be set to "on" and then match by *ct state invalid*
+
+
 * Modsecurity configuration params
 
 SecRequestBodyNoFilesLimit: 128KB. Will configure the max body size that modsecurity will be able to accept.
@@ -144,7 +150,17 @@ We have put special attention to prove that everything developed is working as e
 
 We need to modify the repository of a stress testing tool called wrk in order to allow the tool to retrieve IPs from a config file.
 
-# Nftlb JSON configuration file/API
+# Nftlb JSON configuration file/API JSON
+
+```
+GET http://<lb>:<mgmt_port>/farms
+POST http://<lb>:<mgmt_port>/farms      // body: refer to the JSON configuration
+
+GET http://<lb>:<mgmt_port>/policies
+POST http://<lb>:<mgmt_port>/policies/policies-black/elements/<ip address> // add new element to ingress blacklist policy
+POST http://<lb>:<mgmt_port>/policies/policies-white/elements/<ip address> // add new element to ingress blacklist policy
+```
+The HTTP body should be a JSON especification as below. The comment params are the new one including in this project.
 
 ```JSON
   "farms" : [
@@ -161,7 +177,7 @@ We need to modify the repository of a stress testing tool called wrk in order to
          "state" : "up",
          "mark" : "0x200",
 
-         "tcp-strict" : "on",         		// Validate the TCP protocol*
+         "tcp-strict" : "on",         		    // Validate the TCP protocol*
          "est-conn-limit-saddr" : "10",         	// Set a limit of established connections for service*
          "new-rate-limit-saddr" : "10",         	// Set a maximun rate for new connections*
          "new-rate-limit-burst-saddr" : "10",   	// Allow a rate of extra new connections*
@@ -179,7 +195,7 @@ We need to modify the repository of a stress testing tool called wrk in order to
             },
          ],
 
-         "policies" : [
+         "policies" : [                   // lists of policies per virtual service
             {
                "name" : "blacklist01",    // policy name
             },
@@ -189,6 +205,23 @@ We need to modify the repository of a stress testing tool called wrk in order to
          ]
       }
    ],
+
+  "policies" : [                                    // global lists of policies
+      {
+         "name" : "blacklist01",
+         "type" : "blacklist",                      // blacklist or whitelist
+         "priority" : "1",                          // priority number
+         "timeout" : "20",                          // client ban timeout per list
+         "elements" : [
+            {
+               "data" : "192.168.22.12",
+               "time" : "2s"
+            },
+            {
+               "data" : "192.168.22.11",
+               "time" : 19s"
+            }
+         ]
 }
 ```
 
