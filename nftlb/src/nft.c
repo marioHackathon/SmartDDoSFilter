@@ -688,9 +688,10 @@ static int run_farm_rules_policies(char *buf, struct farm *f, int action)
 			buf, action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_EST_CONN_LIMIT, f->name, f->est_conn_limit_saddr,
 			POLICY_LOG_EST_CONN_LIMIT, f->name);
 	}
-
-	??????falta tcp
-
+	if (f->tcp_strict == VALUE_TCPSTRICT_ON) {
+		sprintf(buf, "%s ; %s rule %s %s ct state invalid log prefix \"%s-%s\" drop",
+			buf, action_str, NFTLB_TABLE_NAME, f->name,	POLICY_LOG_EST_CONN_LIMIT, f->name);
+	}
 
 	return 0;
 }

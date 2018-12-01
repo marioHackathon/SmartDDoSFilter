@@ -98,6 +98,16 @@ static int config_value_proto(const char *value)
 	return -1;
 }
 
+int config_value_tcp_strict(const char *value)
+{
+	if (strcmp(value, CONFIG_VALUE_TCP_STRICT_ON) == 0)
+		return VALUE_TCPSTRICT_ON;
+	else
+		return VALUE_TCPSTRICT_OFF;
+
+	return -1;
+}
+
 static int config_value_sched(const char *value)
 {
 	if (strcmp(value, CONFIG_VALUE_SCHED_RR) == 0)
@@ -232,6 +242,9 @@ static void config_value(const char *value)
 		break;
 	case KEY_EST_CONN_LIMIT_SADDR:
 		c.int_value = atoi(value);
+		break;
+	case KEY_TCP_STRICT:
+		c.int_value = config_value_tcp_strict(value);
 		break;
 	default:
 		c.str_value = (char *)value;

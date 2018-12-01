@@ -304,9 +304,7 @@ static void farm_print(struct farm *f)
 	syslog(LOG_DEBUG,"    [new_rate_limit_burst_saddr] %d", f->new_rate_limit_burst_saddr);
 	syslog(LOG_DEBUG,"    [rst_rate_limit_saddr] %d", f->rst_rate_limit_saddr);
 	syslog(LOG_DEBUG,"    [est_conn_limit_saddr] %d", f->est_conn_limit_saddr);
-
-	if (f->tcp_strict)
-		syslog(LOG_DEBUG,"    [tcp_strict] %s", f->tcp_strict);
+	syslog(LOG_DEBUG,"    [tcp_strict] %d", f->tcp_strict);
 
 	syslog(LOG_DEBUG,"    [family] %s", obj_print_family(f->family));
 	syslog(LOG_DEBUG,"    [mode] %s", obj_print_mode(f->mode));
@@ -594,7 +592,7 @@ int farm_set_attribute(struct config_pair *c)
 		f->est_conn_limit_saddr = c->int_value;
 		break;
 	case KEY_TCP_STRICT:
-		obj_set_attribute_string(c->str_value, &f->tcp_strict);
+		f->tcp_strict = c->int_value;
 		break;
 	default:
 		return -1;

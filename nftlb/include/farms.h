@@ -73,6 +73,11 @@ enum states {
 	VALUE_STATE_CONFERR,
 };
 
+enum tcpstrict {
+	VALUE_TCPSTRICT_OFF,
+	VALUE_TCPSTRICT_ON,
+};
+
 #define VALUE_LOG_NONE			0
 #define VALUE_LOG_INPUT			(1 << 0)
 #define VALUE_LOG_FORWARD		(1 << 1)
@@ -118,7 +123,7 @@ struct farm {
 	int			new_rate_limit_burst_saddr;
 	int			rst_rate_limit_saddr;
 	int			est_conn_limit_saddr;
-	char			*tcp_strict;
+	int			tcp_strict;
 	struct list_head	backends;
 	struct list_head	policies;
 };

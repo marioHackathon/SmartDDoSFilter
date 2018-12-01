@@ -71,6 +71,8 @@
 #define CONFIG_VALUE_PROTO_UDP		"udp"
 #define CONFIG_VALUE_PROTO_SCTP		"sctp"
 #define CONFIG_VALUE_PROTO_ALL		"all"
+#define CONFIG_VALUE_TCP_STRICT_ON		"on"
+#define CONFIG_VALUE_TCP_STRICT_OFF		"off"
 #define CONFIG_VALUE_SCHED_RR		"rr"
 #define CONFIG_VALUE_SCHED_WEIGHT	"weight"
 #define CONFIG_VALUE_SCHED_HASH		"hash"
@@ -121,6 +123,7 @@ int config_buffer(const char *buf);
 int config_print_farms(char **buf, char *name);
 int config_set_farm_action(const char *name, const char *value);
 int config_set_backend_action(const char *fname, const char *bname, const char *value);
+int config_value_tcp_strict(const char *value);
 void config_print_response(char **buf, const char *message);
 
 int config_print_policies(char **buf, char *name);
