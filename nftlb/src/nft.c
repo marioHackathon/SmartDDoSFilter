@@ -285,9 +285,17 @@ static unsigned int get_rules_needed(int family, int protocol, int key)
 	return ret;
 }
 
+static void concat(char *dest, char *src)
+{
+	strcat(dest, src);
+	sprintf(src, "");
+}
+
 static int run_base_ndv(struct nft_ctx *ctx, struct farm *f, int key)
 {
 	char buf[NFTLB_MAX_CMD] = { 0 };
+	char tmp[NFTLB_MAX_CMD] = { 0 };
+
 	struct if_base_rule *if_base;
 	unsigned int rules_needed;
 	char *if_str;
@@ -305,61 +313,106 @@ static int run_base_ndv(struct nft_ctx *ctx, struct farm *f, int key)
 
 	if (((rules_needed & NFTLB_IPV4_ACTIVE) && !(if_base->active & NFTLB_IPV4_ACTIVE)) ||
 	    ((rules_needed & NFTLB_IPV6_ACTIVE) && !(if_base->active & NFTLB_IPV6_ACTIVE))) {
-		sprintf(buf, "%s ; add table %s %s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME);
-		sprintf(buf, "%s ; add set %s %s policies-black { type %s ; timeout 10s ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_MAP_TYPE_IPV4);
-		sprintf(buf, "%s ; add set %s %s policies-white { type %s ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_MAP_TYPE_IPV4);
-		sprintf(buf, "%s ; add chain %s %s %s-%s { type filter hook %s device %s priority %d ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_HOOK_INGRESS, if_str, NFTLB_INGRESS_PRIO);
+
+		sprintf(tmp, "; add table %s %s", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME);
+		concat(buf, tmp);
+
+		sprintf(tmp, "; add set %s %s policies-black { type %s ; timeout 10s ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_MAP_TYPE_IPV4);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add set %s %s policies-white { type %s ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_MAP_TYPE_IPV4);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add chain %s %s %s-%s { type filter hook %s device %s priority %d ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_HOOK_INGRESS, if_str, NFTLB_INGRESS_PRIO);
+		concat(buf, tmp);
+
 		if_base->active |= NFTLB_IPV4_ACTIVE;
 		if_base->active |= NFTLB_IPV6_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV4_UDP_ACTIVE) && !(if_base->active & NFTLB_IPV4_UDP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s",  NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		if_base->active |= NFTLB_IPV4_UDP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV4_TCP_ACTIVE) && !(if_base->active & NFTLB_IPV4_TCP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s-%s %s saddr @policies-white log prefix \"%s-policies-white\" accept", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_TABLE_INGRESS);
-		sprintf(buf, "%s ; add rule %s %s %s-%s %s saddr @policies-black log prefix \"%s-policies-black\" drop", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_TABLE_INGRESS);
-		sprintf(buf, "%s ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s-%s %s saddr @policies-white log prefix \"%s-policies-white\" accept", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_TABLE_INGRESS);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s-%s %s saddr @policies-black log prefix \"%s-policies-black\" drop", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_TABLE_INGRESS);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		if_base->active |= NFTLB_IPV4_TCP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV4_SCTP_ACTIVE) && !(if_base->active & NFTLB_IPV4_SCTP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		if_base->active |= NFTLB_IPV4_SCTP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV6_UDP_ACTIVE) && !(if_base->active & NFTLB_IPV6_UDP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV6_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES6_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV6_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES6_MAP);
+		concat(buf, tmp);
+
 		if_base->active |= NFTLB_IPV6_UDP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV6_TCP_ACTIVE) && !(if_base->active & NFTLB_IPV6_TCP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV6_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES6_MAP);
+		sprintf(tmp, "; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, "; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV6_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES6_MAP);
+		concat(buf, tmp);
+
 		if_base->active |= NFTLB_IPV6_TCP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV6_SCTP_ACTIVE) && !(if_base->active & NFTLB_IPV6_SCTP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV6_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES6_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV6_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES6_MAP);
+		concat(buf, tmp);
+
 		if_base->active |= NFTLB_IPV6_SCTP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV4_IP_ACTIVE) && !(if_base->active & NFTLB_IPV4_IP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s : verdict ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4);
-		sprintf(buf, "%s ; add rule %s %s %s-%s %s saddr vmap @%s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_IP_SERVICES_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s : verdict ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s-%s %s saddr vmap @%s", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_IP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		if_base->active |= NFTLB_IPV4_IP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV6_IP_ACTIVE) && !(if_base->active & NFTLB_IPV6_IP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s : verdict ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6);
-		sprintf(buf, "%s ; add rule %s %s %s-%s %s saddr vmap @%s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV6_FAMILY, NFTLB_IP_SERVICES6_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s : verdict ;}", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s-%s %s saddr vmap @%s", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV6_FAMILY, NFTLB_IP_SERVICES6_MAP);
+		concat(buf, tmp);
+
 		if_base->active |= NFTLB_IPV6_IP_ACTIVE;
 	}
 
@@ -372,85 +425,166 @@ static int run_base_ndv(struct nft_ctx *ctx, struct farm *f, int key)
 static int run_base_nat(struct nft_ctx *ctx, struct farm *f)
 {
 	char buf[NFTLB_MAX_CMD] = { 0 };
+	char tmp[NFTLB_MAX_CMD] = { 0 };
 	unsigned int rules_needed = get_rules_needed(f->family, f->protocol, KEY_IFACE);
 
 	if ((rules_needed & NFTLB_IPV4_ACTIVE) && !(nat_base_rules & NFTLB_IPV4_ACTIVE)) {
-		sprintf(buf, "%s ; add table %s %s", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME);
-		sprintf(buf, "%s ; add chain %s %s %s { type nat hook %s priority %d ;}", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_HOOK_PREROUTING, NFTLB_PREROUTING_PRIO);
-		sprintf(buf, "%s ; add chain %s %s %s { type nat hook %s priority %d ;}", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_HOOK_POSTROUTING, NFTLB_POSTROUTING_PRIO);
-		sprintf(buf, "%s ; add rule %s %s %s ct mark and 0x%x == 0x%x masquerade", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_POSTROUTING_MARK, NFTLB_POSTROUTING_MARK);
+		sprintf(tmp, " ; add table %s %s", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add chain %s %s %s { type nat hook %s priority %d ;}", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_HOOK_PREROUTING, NFTLB_PREROUTING_PRIO);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add chain %s %s %s { type nat hook %s priority %d ;}", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_HOOK_POSTROUTING, NFTLB_POSTROUTING_PRIO);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s ct mark and 0x%x == 0x%x masquerade", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_POSTROUTING_MARK, NFTLB_POSTROUTING_MARK);
+		concat(buf, tmp);
+
 		nat_base_rules |= NFTLB_IPV4_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV6_ACTIVE) && !(nat_base_rules & NFTLB_IPV6_ACTIVE)) {
-		sprintf(buf, "%s ; add table %s %s", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME);
-		sprintf(buf, "%s ; add chain %s %s %s { type nat hook %s priority %d ;}", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_HOOK_PREROUTING, NFTLB_PREROUTING_PRIO);
-		sprintf(buf, "%s ; add chain %s %s %s { type nat hook %s priority %d ;}", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_HOOK_POSTROUTING, NFTLB_POSTROUTING_PRIO);
-		sprintf(buf, "%s ; add rule %s %s %s ct mark and 0x%x == 0x%x masquerade", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_POSTROUTING_MARK, NFTLB_POSTROUTING_MARK);
+		sprintf(tmp, "; add table %s %s", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add chain %s %s %s { type nat hook %s priority %d ;}", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_HOOK_PREROUTING, NFTLB_PREROUTING_PRIO);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add chain %s %s %s { type nat hook %s priority %d ;}", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_HOOK_POSTROUTING, NFTLB_POSTROUTING_PRIO);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s ct mark and 0x%x == 0x%x masquerade", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_POSTROUTING_MARK, NFTLB_POSTROUTING_MARK);
+		concat(buf, tmp);
+
 		nat_base_rules |= NFTLB_IPV6_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV4_UDP_ACTIVE) && !(nat_base_rules & NFTLB_IPV4_UDP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s %s daddr . %s dport vmap @%s", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV4_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES_MAP);
-		sprintf(buf, "%s ; add map %s %s %s-back { type %s . %s : %s ;}", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV4);
-		sprintf(buf, "%s ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV4_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s %s daddr . %s dport vmap @%s", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV4_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES_MAP);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add map %s %s %s-back { type %s . %s : %s ;}", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV4);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV4_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		nat_base_rules |= NFTLB_IPV4_UDP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV4_TCP_ACTIVE) && !(nat_base_rules & NFTLB_IPV4_TCP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s %s daddr . %s dport vmap @%s", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV4_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
-		sprintf(buf, "%s ; add map %s %s %s-back { type %s . %s : %s ;}", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV4);
-		sprintf(buf, "%s ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV4_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s %s daddr . %s dport vmap @%s", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV4_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add map %s %s %s-back { type %s . %s : %s ;}", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV4);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV4_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		nat_base_rules |= NFTLB_IPV4_TCP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV4_SCTP_ACTIVE) && !(nat_base_rules & NFTLB_IPV4_SCTP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s %s daddr . %s dport vmap @%s", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV4_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES_MAP);
-		sprintf(buf, "%s ; add map %s %s %s-back { type %s . %s : %s ;}", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV4);
-		sprintf(buf, "%s ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV4_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES_MAP);
+		sprintf(tmp, "; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, "; add rule %s %s %s %s daddr . %s dport vmap @%s", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV4_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES_MAP);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add map %s %s %s-back { type %s . %s : %s ;}", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV4);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV4_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		nat_base_rules |= NFTLB_IPV4_SCTP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV4_IP_ACTIVE) && !(nat_base_rules & NFTLB_IPV4_IP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s : verdict ;}", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4);
-		sprintf(buf, "%s ; add rule %s %s %s %s daddr vmap @%s", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV4_FAMILY, NFTLB_IP_SERVICES_MAP);
-		sprintf(buf, "%s ; add map %s %s %s-back { type %s : %s ;}", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_IPV4);
-		sprintf(buf, "%s ; add rule %s %s %s snat to %s daddr map @%s-back", buf, NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV4_FAMILY, NFTLB_IP_SERVICES_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s : verdict ;}", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s %s daddr vmap @%s", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV4_FAMILY, NFTLB_IP_SERVICES_MAP);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add map %s %s %s-back { type %s : %s ;}", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_IPV4);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s snat to %s daddr map @%s-back", NFTLB_IPV4_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV4_FAMILY, NFTLB_IP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		nat_base_rules |= NFTLB_IPV4_IP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV6_UDP_ACTIVE) && !(nat_base_rules & NFTLB_IPV6_UDP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s %s daddr . %s dport vmap @%s", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV6_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES6_MAP);
-		sprintf(buf, "%s ; add map %s %s %s-back { type %s . %s : %s ;}", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV6);
-		sprintf(buf, "%s ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV6_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES6_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s . %s : verdict ;}",  NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s %s daddr . %s dport vmap @%s",  NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV6_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES6_MAP);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add map %s %s %s-back { type %s . %s : %s ;}",  NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_UDP_SERVICES6_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV6);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back",  NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV6_FAMILY, NFTLB_UDP_PROTO, NFTLB_UDP_SERVICES6_MAP);
+		concat(buf, tmp);
+
 		nat_base_rules |= NFTLB_IPV6_UDP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV6_TCP_ACTIVE) && !(nat_base_rules & NFTLB_IPV6_TCP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s %s daddr . %s dport vmap @%s", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV6_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
-		sprintf(buf, "%s ; add map %s %s %s-back { type %s . %s : %s ;}", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV6);
-		sprintf(buf, "%s ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV6_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s %s daddr . %s dport vmap @%s", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV6_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add map %s %s %s-back { type %s . %s : %s ;}", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV6);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back",  NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV6_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		nat_base_rules |= NFTLB_IPV6_TCP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV6_SCTP_ACTIVE) && !(nat_base_rules & NFTLB_IPV6_SCTP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
-		sprintf(buf, "%s ; add rule %s %s %s %s daddr . %s dport vmap @%s", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV6_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES_MAP);
-		sprintf(buf, "%s ; add map %s %s %s-back { type %s . %s : %s ;}", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV6);
-		sprintf(buf, "%s ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV6_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s . %s : verdict ;}", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s %s daddr . %s dport vmap @%s", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV6_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES_MAP);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add map %s %s %s-back { type %s . %s : %s ;}", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_SCTP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_INETSRV, NFTLB_MAP_TYPE_IPV6);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s snat to %s daddr . %s dport map @%s-back", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV6_FAMILY, NFTLB_SCTP_PROTO, NFTLB_SCTP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		nat_base_rules |= NFTLB_IPV6_SCTP_ACTIVE;
 	}
 
 	if ((rules_needed & NFTLB_IPV6_IP_ACTIVE) && !(nat_base_rules & NFTLB_IPV6_IP_ACTIVE)) {
-		sprintf(buf, "%s ; add map %s %s %s { type %s : verdict ;}", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6);
-		sprintf(buf, "%s ; add rule %s %s %s %s daddr vmap @%s", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV6_FAMILY, NFTLB_IP_SERVICES_MAP);
-		sprintf(buf, "%s ; add map %s %s %s-back { type %s : %s ;}", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_IPV6);
-		sprintf(buf, "%s ; add rule %s %s %s snat to %s daddr map @%s-back", buf, NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV6_FAMILY, NFTLB_IP_SERVICES_MAP);
+		sprintf(tmp, " ; add map %s %s %s { type %s : verdict ;}", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s %s daddr vmap @%s", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_PREROUTING, NFTLB_IPV6_FAMILY, NFTLB_IP_SERVICES_MAP);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add map %s %s %s-back { type %s : %s ;}", NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_IP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV6, NFTLB_MAP_TYPE_IPV6);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; add rule %s %s %s snat to %s daddr map @%s-back",  NFTLB_IPV6_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_POSTROUTING, NFTLB_IPV6_FAMILY, NFTLB_IP_SERVICES_MAP);
+		concat(buf, tmp);
+
 		nat_base_rules |= NFTLB_IPV6_IP_ACTIVE;
 	}
 
@@ -462,16 +596,23 @@ static int run_base_nat(struct nft_ctx *ctx, struct farm *f)
 
 static void run_farm_rules_gen_chains(char *buf, struct farm *f, char *chain, int family, int action)
 {
+	char tmp[NFTLB_MAX_CMD] = { 0 };
+
 	switch (action) {
 	case ACTION_RELOAD:
-		sprintf(buf, "%s ; flush chain %s %s %s", buf, print_nft_table_family(family, f->mode), NFTLB_TABLE_NAME, chain);
+		sprintf(tmp, " ; flush chain %s %s %s",  print_nft_table_family(family, f->mode), NFTLB_TABLE_NAME, chain);
+		concat(buf, tmp);
 		break;
 	case ACTION_START:
-		sprintf(buf, "%s ; add chain %s %s %s", buf, print_nft_table_family(family, f->mode), NFTLB_TABLE_NAME, chain);
+		sprintf(tmp, " ; add chain %s %s %s",  print_nft_table_family(family, f->mode), NFTLB_TABLE_NAME, chain);
+		concat(buf, tmp);
 		break;
 	case ACTION_DELETE:
-		sprintf(buf, "%s ; flush chain %s %s %s", buf, print_nft_table_family(family, f->mode), NFTLB_TABLE_NAME, chain);
-		sprintf(buf, "%s ; delete chain %s %s %s", buf, print_nft_table_family(family, f->mode), NFTLB_TABLE_NAME, chain);
+		sprintf(tmp, " ; flush chain %s %s %s",  print_nft_table_family(family, f->mode), NFTLB_TABLE_NAME, chain);
+		concat(buf, tmp);
+
+		sprintf(tmp, " ; delete chain %s %s %s",  print_nft_table_family(family, f->mode), NFTLB_TABLE_NAME, chain);
+		concat(buf, tmp);
 		break;
 	default:
 		break;
@@ -480,22 +621,34 @@ static void run_farm_rules_gen_chains(char *buf, struct farm *f, char *chain, in
 
 static int run_farm_rules_gen_sched(char *buf, struct farm *f, int family)
 {
+	char tmp[NFTLB_MAX_CMD] = { 0 };
+
 	switch (f->scheduler) {
 	case VALUE_SCHED_RR:
-		sprintf(buf, "%s numgen inc mod %d", buf, f->total_weight);
+		sprintf(tmp, " numgen inc mod %d", f->total_weight);
+		concat(buf, tmp);
+
 		break;
 	case VALUE_SCHED_WEIGHT:
-		sprintf(buf, "%s numgen random mod %d", buf, f->total_weight);
+		sprintf(tmp, " numgen random mod %d",  f->total_weight);
+		concat(buf, tmp);
+
 		break;
 	case VALUE_SCHED_HASH:
 		if ((f->protocol != VALUE_PROTO_TCP || f->protocol == VALUE_PROTO_SCTP) &&
-		    (f->mode == VALUE_MODE_DSR || f->mode == VALUE_MODE_STLSDNAT))
-			sprintf(buf, "%s jhash %s saddr . %s sport mod %d", buf, print_nft_family(family), print_nft_protocol(f->protocol), f->total_weight);
-		else
-			sprintf(buf, "%s jhash %s saddr mod %d", buf, print_nft_family(family), f->total_weight);
+		    (f->mode == VALUE_MODE_DSR || f->mode == VALUE_MODE_STLSDNAT)) {
+			sprintf(tmp, " jhash %s saddr . %s sport mod %d",  print_nft_family(family), print_nft_protocol(f->protocol), f->total_weight);
+			concat(buf, tmp);
+
+		} else {
+			sprintf(tmp, " jhash %s saddr mod %d", print_nft_family(family), f->total_weight);
+			concat(buf, tmp);
+		}
 		break;
 	case VALUE_SCHED_SYMHASH:
-		sprintf(buf, "%s symhash mod %d", buf, f->total_weight);
+		sprintf(tmp, " symhash mod %d", f->total_weight);
+		concat(buf, tmp);
+
 		break;
 	default:
 		return -1;
@@ -506,6 +659,7 @@ static int run_farm_rules_gen_sched(char *buf, struct farm *f, int family)
 
 static int run_farm_rules_gen_bck_map(char *buf, struct farm *f, enum map_modes key_mode, enum map_modes data_mode, int offset)
 {
+	char tmp[NFTLB_MAX_CMD] = { 0 };
 	char key_str[255] = { 0 };
 	char data_str[255] = { 0 };
 	struct backend *b;
@@ -513,14 +667,14 @@ static int run_farm_rules_gen_bck_map(char *buf, struct farm *f, enum map_modes 
 	int last = 0;
 	int new;
 
-	sprintf(buf, "%s map {", buf);
+	strcat(buf, " map {");
 
 	list_for_each_entry(b, &f->backends, list) {
 		if(!backend_is_available(b))
 			continue;
 
 		if (i != 0)
-			sprintf(buf, "%s,", buf);
+			strcat(buf, ",");
 
 		switch (key_mode) {
 		case BCK_MAP_MARK:
@@ -529,8 +683,10 @@ static int run_farm_rules_gen_bck_map(char *buf, struct farm *f, enum map_modes 
 		case BCK_MAP_WEIGHT:
 			new = last + b->weight - 1;
 			sprintf(key_str, "%d", last);
-			if (new != last)
-				sprintf(key_str, "%s-%d", key_str, new);
+			if (new != last) {
+				sprintf(tmp, "%s-%d", key_str, new);
+				concat(key_str, tmp);
+			}
 			last = new + 1;
 			break;
 		default:
@@ -551,11 +707,12 @@ static int run_farm_rules_gen_bck_map(char *buf, struct farm *f, enum map_modes 
 			break;
 		}
 
-		sprintf(buf, "%s %s: %s", buf, key_str, data_str);
+		sprintf(tmp, " %s: %s", key_str, data_str);
+		concat(buf, tmp);
 		i++;
 	}
 
-	sprintf(buf, "%s }", buf);
+	strcat(buf, " }");
 
 	if (i == 0)
 		return -1;
@@ -657,6 +814,7 @@ static int run_farm_rules_gen_srv(char *buf, struct farm *f, int family, char * 
 
 static int run_farm_rules_policies(char *buf, struct farm *f, int action)
 {
+	char tmp[NFTLB_MAX_CMD] = { 0 };
 	char action_str[255] = { 0 };
 	char name[255] = { 0 };
 
@@ -673,28 +831,34 @@ static int run_farm_rules_policies(char *buf, struct farm *f, int action)
 	}
 
 	if (f->new_rate_limit_saddr > 0) {
-		if (f->new_rate_limit_burst_saddr > 0)
-			sprintf(buf, "%s ; %s rule %s %s ct state new meter %s-%s { ip saddr limit rate over %d/second burst %d packets } log prefix \"%s-%s\" drop",
-				buf, action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_NEW_CONN_RATE_LIMIT, f->name, f->new_rate_limit_saddr,
+		if (f->new_rate_limit_burst_saddr > 0) {
+			sprintf(tmp, " ; %s rule %s %s ct state new meter %s-%s { ip saddr limit rate over %d/second burst %d packets } log prefix \"%s-%s\" drop",
+				action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_NEW_CONN_RATE_LIMIT, f->name, f->new_rate_limit_saddr,
 				f->new_rate_limit_burst_saddr, POLICY_LOG_NEW_RATE_LIMIT, f->name);
-		else
-			sprintf(buf, "%s ; %s rule %s %s ct state new meter %s-%s { ip saddr limit rate over %d/second } log prefix \"%s-%s\" drop",
-				buf, action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_NEW_CONN_RATE_LIMIT, f->name, f->new_rate_limit_saddr,
+			concat(buf, tmp);
+		} else {
+			sprintf(tmp, " ; %s rule %s %s ct state new meter %s-%s { ip saddr limit rate over %d/second } log prefix \"%s-%s\" drop",
+				action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_NEW_CONN_RATE_LIMIT, f->name, f->new_rate_limit_saddr,
 				POLICY_LOG_NEW_RATE_LIMIT, f->name);
+			concat(buf, tmp);
+		}
 	}
 	if (f->rst_rate_limit_saddr > 0) {
-		sprintf(buf, "%s ; %s rule %s %s tcp flags rst meter %s-%s { ip saddr limit rate over %d/second } log prefix \"%s-%s\" drop",
-			buf, action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_RST_RATE_LIMIT, f->name, f->rst_rate_limit_saddr,
+		sprintf(tmp, " ; %s rule %s %s tcp flags rst meter %s-%s { ip saddr limit rate over %d/second } log prefix \"%s-%s\" drop",
+			action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_RST_RATE_LIMIT, f->name, f->rst_rate_limit_saddr,
 			POLICY_LOG_RST_RATE_LIMIT, f->name);
+		concat(buf, tmp);
 	}
 	if (f->est_conn_limit_saddr > 0) {
-		sprintf(buf, "%s ; %s rule %s %s ct state new meter %s-%s { ip saddr ct count over %d } log prefix \"%s-%s\" drop",
-			buf, action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_EST_CONN_LIMIT, f->name, f->est_conn_limit_saddr,
+		sprintf(tmp, " ; %s rule %s %s ct state new meter %s-%s { ip saddr ct count over %d } log prefix \"%s-%s\" drop",
+			action_str, NFTLB_TABLE_NAME, f->name, METER_POLICY_EST_CONN_LIMIT, f->name, f->est_conn_limit_saddr,
 			POLICY_LOG_EST_CONN_LIMIT, f->name);
+		concat(buf, tmp);
 	}
 	if (f->tcp_strict == VALUE_TCPSTRICT_ON) {
-		sprintf(buf, "%s ; %s rule %s %s ct state invalid log prefix \"%s-%s\" drop",
-			buf, action_str, NFTLB_TABLE_NAME, f->name,	POLICY_LOG_EST_CONN_LIMIT, f->name);
+		sprintf(tmp, " ; %s rule %s %s ct state invalid log prefix \"%s-%s\" drop",
+			action_str, NFTLB_TABLE_NAME, f->name,	POLICY_LOG_EST_CONN_LIMIT, f->name);
+		concat(buf, tmp);
 	}
 
 	return 0;
