@@ -107,6 +107,14 @@ make
 
 make install
 
+* Configure kernel parameters to deny invalid tcp connections
+
+`
+echo 0 > /proc/sys/net/netfilter/nf_conntrack_tcp_be_liberal
+
+echo 0 > /proc/sys/net/netfilter/nf_conntrack_tcp_loose
+`
+
 ## Tests description
 
 We have put special attention to prove that everything developed is working as expected, related with this, we are developing many shellscripts in order to perform TCP and HTTP flood attacks agains the system in order to check that the security apply to the system is working properly. Those scripts are:
