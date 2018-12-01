@@ -3,3 +3,6 @@
   Create http flood and bogus flood for testing purpose.
 [WAF]
   Improve the WAF rules set.
+[NFTLB]
+  We are currently using a ssh tunnel as a temporal solution, in the close future we will implement HTTPS support for nftlb listener instead.
+  Study the use of syscall with getrandom function to solve the srand seed issue.
