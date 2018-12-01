@@ -1,8 +1,13 @@
 # SmartDDoSFilter
 
-Repository used for the Cybercamp 2018 event
+This proyect extends the nfltlb daemon to add control about the connection limit. The nftlb API will able to set kernel rules to restrict the number of connections by user and dinamicaly, those limits will able to be modified using a external process.
 
-## Tools
+Nftlb will able to accept API requests relate to add blacklist entries in the ingress hook, optimizing the performance of blocking malicious clients requests, that has been detected by an external detection tool.
+
+In this repository will be added attacks examples too. These tools will let test and demostrate the new features implemented
+
+
+## Used tools
 
 ### Nftlb:
 
@@ -61,7 +66,7 @@ Firewall/LB: The Load Balancer will be used as a firewall and a gateway, nftable
 
 2 Backends: They contain apache2 web server with the modsecurity module. The will use LUA scripting language to communicate with nftlb daemon.
 
-### Compile nftlb
+### Quick started
 
 The operative system used is Debian Buster. In this Debian version, nftlib supports all features of nftlb, so it is not necessarty to compile handly the library.
 
@@ -107,9 +112,11 @@ make
 
 make install
 
-* Configure kernel parameters to deny invalid tcp connections
+* Configure kernel parameters to enable IP forwarding and to deny invalid tcp connections
 
 `
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
 echo 0 > /proc/sys/net/netfilter/nf_conntrack_tcp_be_liberal
 
 echo 0 > /proc/sys/net/netfilter/nf_conntrack_tcp_loose
@@ -126,7 +133,7 @@ We have put special attention to prove that everything developed is working as e
 
 We need to modify the repository of a stress testing tool called wrk in order to allow the tool to retrieve IPs from a config file.
 
-# Nftlb API
+# Nftlb JSON configuration file/API
 
 ```JSON
   "farms" : [
