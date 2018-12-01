@@ -121,6 +121,17 @@ echo 0 > /proc/sys/net/netfilter/nf_conntrack_tcp_be_liberal
 
 echo 0 > /proc/sys/net/netfilter/nf_conntrack_tcp_loose
 `
+* Modsecurity configuration params
+
+SecRequestBodyNoFilesLimit: 128KB. Will configure the max body size that modsecurity will be able to accept.
+
+SecRequestBodyLimitAction: ProcessPartial. If the body is higher than configured, it will only partially parse the configure number of bytes.
+
+SecPcreMatchLimit: Avoid generic regular expression to parse the whole body. Intended to mitigate regex attack. 
+ 
+* Apache Configuration params:
+
+KeepAliveTimeout: Avoid connections to be idle for a long time.
 
 ## Tests description
 
