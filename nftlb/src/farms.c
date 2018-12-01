@@ -464,6 +464,12 @@ int farm_pre_actionable(struct config_pair *c)
 	case KEY_VIRTPORTS:
 	case KEY_MODE:
 	case KEY_PROTO:
+	case KEY_NEW_RATE_LIMIT_SADDR:
+	case KEY_NEW_RATE_LIMIT_BURST_SADDR:
+	case KEY_RST_RATE_LIMIT_SADDR:
+	case KEY_EST_CONN_LIMIT_SADDR:
+	case KEY_TCP_STRICT:
+
 		if (farm_set_action(f, ACTION_STOP))
 			farm_rulerize(f);
 		break;
@@ -495,6 +501,11 @@ int farm_pos_actionable(struct config_pair *c)
 	case KEY_VIRTPORTS:
 	case KEY_MODE:
 	case KEY_PROTO:
+	case KEY_NEW_RATE_LIMIT_SADDR:
+	case KEY_NEW_RATE_LIMIT_BURST_SADDR:
+	case KEY_RST_RATE_LIMIT_SADDR:
+	case KEY_EST_CONN_LIMIT_SADDR:
+	case KEY_TCP_STRICT:
 		farm_set_action(f, ACTION_START);
 		break;
 	case KEY_STATE:
