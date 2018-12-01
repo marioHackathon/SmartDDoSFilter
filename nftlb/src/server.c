@@ -238,8 +238,12 @@ delete_end:
 static int send_post_response(struct nftlb_http_state *state)
 {
 	char firstlevel[SRV_MAX_IDENT] = {0};
+	char secondlevel[SRV_MAX_IDENT] = {0};
+	char thirdlevel[SRV_MAX_IDENT] = {0};
+	char fourthlevel[SRV_MAX_IDENT] = {0};
 
-	sscanf(state->uri, "/%199[^\n]", firstlevel);
+	sscanf(state->uri, "/%199[^/]/%199[^/]/%199[^/]/%199[^\n]",
+	       firstlevel, secondlevel, thirdlevel, fourthlevel);
 
 	if ((strcmp(firstlevel, CONFIG_KEY_FARMS) != 0) &&
 		(strcmp(firstlevel, CONFIG_KEY_POLICIES) != 0)) {
@@ -251,6 +255,13 @@ static int send_post_response(struct nftlb_http_state *state)
 	if (!state->body_response) {
 		state->status_code = WS_HTTP_500;
 		return -1;
+	}
+
+	if ((strcmp(firstlevel, CONFIG_KEY_POLICIES) == 0) &&
+		(strcmp(thirdlevel, CONFIG_KEY_ELEMENTS) == 0)) {
+		nft_add_policy_element(secondlevel, fourthlevel);
+		config_print_response(&state->body_response, "success");
+		goto post_end;
 	}
 
 	if (config_buffer(state->body) != 0) {

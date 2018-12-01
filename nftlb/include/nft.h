@@ -26,6 +26,7 @@
 
 #define NFTLB_POSTROUTING_MARK		0x80000000
 
+void nft_add_policy_element(char *policy, char *element);
 int nft_reset(void);
 int nft_rulerize(struct farm *f);
 

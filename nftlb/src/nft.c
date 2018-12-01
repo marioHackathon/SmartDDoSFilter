@@ -306,6 +306,8 @@ static int run_base_ndv(struct nft_ctx *ctx, struct farm *f, int key)
 	if (((rules_needed & NFTLB_IPV4_ACTIVE) && !(if_base->active & NFTLB_IPV4_ACTIVE)) ||
 	    ((rules_needed & NFTLB_IPV6_ACTIVE) && !(if_base->active & NFTLB_IPV6_ACTIVE))) {
 		sprintf(buf, "%s ; add table %s %s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME);
+		sprintf(buf, "%s ; add set %s %s policies-black { type %s ; timeout 10s ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_MAP_TYPE_IPV4);
+		sprintf(buf, "%s ; add set %s %s policies-white { type %s ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_MAP_TYPE_IPV4);
 		sprintf(buf, "%s ; add chain %s %s %s-%s { type filter hook %s device %s priority %d ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_HOOK_INGRESS, if_str, NFTLB_INGRESS_PRIO);
 		if_base->active |= NFTLB_IPV4_ACTIVE;
 		if_base->active |= NFTLB_IPV6_ACTIVE;
@@ -319,6 +321,8 @@ static int run_base_ndv(struct nft_ctx *ctx, struct farm *f, int key)
 
 	if ((rules_needed & NFTLB_IPV4_TCP_ACTIVE) && !(if_base->active & NFTLB_IPV4_TCP_ACTIVE)) {
 		sprintf(buf, "%s ; add map %s %s %s { type %s . %s : verdict ;}", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TCP_SERVICES_MAP, NFTLB_MAP_TYPE_IPV4, NFTLB_MAP_TYPE_INETSRV);
+		sprintf(buf, "%s ; add rule %s %s %s-%s %s saddr @policies-white log prefix \"%s-policies-white\" accept", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_TABLE_INGRESS);
+		sprintf(buf, "%s ; add rule %s %s %s-%s %s saddr @policies-black log prefix \"%s-policies-black\" drop", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_TABLE_INGRESS);
 		sprintf(buf, "%s ; add rule %s %s %s-%s %s daddr . %s dport vmap @%s", buf, NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME, NFTLB_TABLE_INGRESS, if_str, NFTLB_IPV4_FAMILY, NFTLB_TCP_PROTO, NFTLB_TCP_SERVICES_MAP);
 		if_base->active |= NFTLB_IPV4_TCP_ACTIVE;
 	}
@@ -919,6 +923,20 @@ static int del_farm(struct nft_ctx *ctx, struct farm *f)
 			run_farm_stlsnat(ctx, f, VALUE_FAMILY_IPV6, ACTION_DELETE);
 		}
 	}
+
+	return ret;
+}
+
+void nft_add_policy_element(char *policy, char *element)
+{
+	struct nft_ctx *ctx = nft_ctx_new(0);
+	char buf[NFTLB_MAX_CMD] = { 0 };
+	int ret = 0;
+
+	sprintf(buf, "add element %s %s %s { %s }", NFTLB_NETDEV_FAMILY, NFTLB_TABLE_NAME , policy, element);
+	exec_cmd(ctx, buf);
+
+	nft_ctx_free(ctx);
 
 	return ret;
 }
