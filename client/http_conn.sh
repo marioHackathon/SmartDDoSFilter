@@ -3,9 +3,9 @@
 # Simulate legal http connection
 function print_help ()
 {
-  echo "Usage: \"rst_flood.sh -d IP -p PORT\""
+  echo "Usage: \"http_conn.sh -d IP -p PORT\""
   echo -e "It is mandatory to include -d and -p option, script should be run with sudo."
-  echo -e "-u \t --url \t\tUrl to be requested, should be like http://www.hackathon.com."
+  echo -e "-u \t --url \t\tUrl to be requested, should be like http://www.hackathon.com:80."
   echo -e "-c \t --count \t\tNumber of http get requests to be sent."
   echo -e "-i \t --interval \t\tInterval between iterations."
   echo -e "-H \t --HOST \t\tAdd host header to the curl command."
@@ -38,7 +38,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     *)
-      echo "Try rst_flood.sh -h or --help"
+      echo "Try http_conn.sh -h or --help"
       exit
       ;;
   esac
